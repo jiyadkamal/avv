@@ -1,0 +1,10 @@
+﻿C:\Users\jadee\Documents\FreelanceCode\avv\src\app\page.tsx
+C:\Users\jadee\Documents\FreelanceCode\avv\src\app\(auth\)\login\page.tsx
+C:\Users\jadee\Documents\FreelanceCode\avv\src\app\(auth\)\register\page.tsx
+C:\Users\jadee\Documents\FreelanceCode\avv\src\app\admin\dashboard\page.tsx
+C:\Users\jadee\Documents\FreelanceCode\avv\src\app\admin\moderation\[id\]\page.tsx
+C:\Users\jadee\Documents\FreelanceCode\avv\src\app\admin\users\page.tsx
+C:\Users\jadee\Documents\FreelanceCode\avv\src\app\contributor\dashboard\page.tsx
+C:\Users\jadee\Documents\FreelanceCode\avv\src\app\contributor\upload\page.tsx
+C:\Users\jadee\Documents\FreelanceCode\avv\src\app\subscriber\dashboard\page.tsx
+C:\Users\jadee\Documents\FreelanceCode\avv\src\app\subscriber\report\[id\]\page.tsx
