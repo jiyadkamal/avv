@@ -190,24 +190,24 @@ export default function UploadReportPage() {
     return (
         <DashboardLayout role={UserRole.CONTRIBUTOR}>
             <div className="max-w-3xl mx-auto space-y-8 pb-20">
-                <div>
-                    <h1 className="text-3xl font-bold mb-2">Report an Accident</h1>
-                    <p className="text-muted-foreground">Follow the steps below to submit a verified accident report.</p>
+                <div className="px-1">
+                    <h1 className="text-2xl md:text-3xl font-bold mb-2">Report an Accident</h1>
+                    <p className="text-sm md:text-base text-muted-foreground">Follow the steps below to submit a verified accident report.</p>
                 </div>
 
                 {/* Stepper */}
-                <div className="flex items-center justify-between px-4">
+                <div className="flex items-center justify-between px-2 md:px-4">
                     {[1, 2, 3].map((s) => (
                         <div key={s} className="flex items-center">
                             <div className={cn(
-                                "w-10 h-10 rounded-full flex items-center justify-center font-bold transition-colors",
+                                "w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center font-bold transition-colors text-sm md:text-base",
                                 step >= s ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
                             )}>
-                                {step > s ? <CheckCircle2 className="w-6 h-6" /> : s}
+                                {step > s ? <CheckCircle2 className="w-5 h-5 md:w-6 md:h-6" /> : s}
                             </div>
                             {s < 3 && (
                                 <div className={cn(
-                                    "w-16 h-1 mx-2 rounded-full",
+                                    "w-10 xs:w-16 h-1 mx-1 xs:mx-2 rounded-full",
                                     step > s ? "bg-primary" : "bg-muted"
                                 )} />
                             )}
@@ -215,20 +215,20 @@ export default function UploadReportPage() {
                     ))}
                 </div>
 
-                <Card className="border-none shadow-xl shadow-black/5 rounded-[2.5rem] overflow-hidden">
-                    <CardHeader className="p-8 pb-4">
-                        <CardTitle>
+                <Card className="border-none shadow-sm rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden">
+                    <CardHeader className="p-6 md:p-8 pb-4">
+                        <CardTitle className="text-xl md:text-2xl">
                             {step === 1 && "Vehicle Details"}
                             {step === 2 && "Accident Details"}
                             {step === 3 && "Photos & GPS"}
                         </CardTitle>
-                        <CardDescription>
+                        <CardDescription className="text-sm">
                             {step === 1 && "Start by identifying the vehicle involved."}
                             {step === 2 && "Tell us more about the accident context."}
                             {step === 3 && "Upload clear evidence and capture location."}
                         </CardDescription>
                     </CardHeader>
-                    <CardContent className="p-8 pt-4 space-y-6">
+                    <CardContent className="p-6 md:p-8 pt-4 space-y-6">
                         {step === 1 && (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
@@ -308,9 +308,9 @@ export default function UploadReportPage() {
                             <div className="space-y-6">
                                 <div className="space-y-2">
                                     <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Upload Photos</Label>
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-2">
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 md:gap-4 mt-2">
                                         {imageUrls.map((img, i) => (
-                                            <div key={i} className="relative aspect-square rounded-2xl overflow-hidden group border">
+                                            <div key={i} className="relative aspect-square rounded-xl md:rounded-2xl overflow-hidden group border">
                                                 <img src={img} alt="Preview" className="w-full h-full object-cover" />
                                                 <button
                                                     onClick={() => removeImage(i)}
@@ -320,9 +320,9 @@ export default function UploadReportPage() {
                                                 </button>
                                             </div>
                                         ))}
-                                        <label className="aspect-square rounded-2xl bg-muted/50 border-2 border-dashed border-muted flex flex-col items-center justify-center cursor-pointer hover:bg-muted/80 transition-colors">
-                                            <Plus className="w-8 h-8 text-muted-foreground mb-1" />
-                                            <span className="text-[10px] font-bold text-muted-foreground uppercase">Add Photo</span>
+                                        <label className="aspect-square rounded-xl md:rounded-2xl bg-muted/50 border-2 border-dashed border-muted flex flex-col items-center justify-center cursor-pointer hover:bg-muted/80 transition-colors">
+                                            <Plus className="w-7 h-7 md:w-8 md:h-8 text-muted-foreground mb-1" />
+                                            <span className="text-[9px] md:text-[10px] font-bold text-muted-foreground uppercase">Add Photo</span>
                                             <input type="file" multiple className="hidden" onChange={handleImageUpload} accept="image/*" />
                                         </label>
                                     </div>
@@ -356,10 +356,10 @@ export default function UploadReportPage() {
                             </div>
                         )}
                     </CardContent>
-                    <CardFooter className="p-8 pt-6 flex items-center justify-between border-t border-muted bg-muted/20">
+                    <CardFooter className="p-6 md:p-8 pt-6 flex flex-col xs:flex-row items-stretch xs:items-center justify-between gap-3 border-t border-muted bg-muted/10">
                         <Button
                             variant="ghost"
-                            className="rounded-2xl h-12 px-6 font-bold"
+                            className="rounded-xl xs:rounded-2xl h-11 md:h-12 px-6 font-bold order-2 xs:order-1"
                             onClick={handleBack}
                             disabled={step === 1 || isSubmitting}
                         >
@@ -368,7 +368,7 @@ export default function UploadReportPage() {
                         </Button>
                         {step < 3 ? (
                             <Button
-                                className="rounded-2xl h-12 px-8 font-bold"
+                                className="rounded-xl xs:rounded-2xl h-11 md:h-12 px-8 font-bold order-1 xs:order-2"
                                 onClick={handleNext}
                             >
                                 Next Step
@@ -376,7 +376,7 @@ export default function UploadReportPage() {
                             </Button>
                         ) : (
                             <Button
-                                className="rounded-2xl h-12 px-8 font-bold"
+                                className="rounded-xl xs:rounded-2xl h-11 md:h-12 px-8 font-bold order-1 xs:order-2"
                                 onClick={handleSubmit}
                                 disabled={isSubmitting || !formData.vin || !formData.make}
                             >

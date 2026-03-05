@@ -154,8 +154,8 @@ export default function AdminDashboard() {
                             Monitor platform activity and manage verifications.
                         </p>
                     </div>
-                    <Link href="/admin/moderation">
-                        <Button className="rounded-2xl h-12 px-6 font-bold gap-2">
+                    <Link href="/admin/moderation" className="w-full md:w-auto">
+                        <Button className="rounded-2xl h-12 px-6 font-bold gap-2 w-full">
                             <ShieldCheck className="w-4 h-4" />
                             Review Queue
                         </Button>
@@ -212,27 +212,27 @@ export default function AdminDashboard() {
                                 {pendingReports.map((report) => (
                                     <div
                                         key={report.id}
-                                        className="flex items-center justify-between p-4 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors"
+                                        className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors gap-4"
                                     >
                                         <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center">
+                                            <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center shrink-0">
                                                 <Clock className="w-6 h-6 text-amber-600" />
                                             </div>
-                                            <div>
-                                                <p className="font-bold">
+                                            <div className="min-w-0">
+                                                <p className="font-bold truncate">
                                                     {report.vehicle_make} {report.vehicle_model}
                                                 </p>
-                                                <p className="text-sm text-muted-foreground">
+                                                <p className="text-sm text-muted-foreground truncate">
                                                     VIN: ...{report.vehicle_vin?.slice(-6) || 'N/A'} • {new Date(report.created_at).toLocaleDateString()}
                                                 </p>
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-2">
-                                            <Link href={`/admin/moderation/${report.id}`}>
+                                        <div className="flex items-center gap-2 sm:ml-auto">
+                                            <Link href={`/admin/moderation/${report.id}`} className="flex-1 sm:flex-none">
                                                 <Button
                                                     size="sm"
                                                     variant="outline"
-                                                    className="rounded-xl"
+                                                    className="rounded-xl w-full sm:w-auto"
                                                 >
                                                     <Eye className="w-4 h-4" />
                                                 </Button>
@@ -240,14 +240,14 @@ export default function AdminDashboard() {
                                             <Button
                                                 size="sm"
                                                 variant="outline"
-                                                className="rounded-xl text-red-600 hover:bg-red-50"
+                                                className="rounded-xl text-red-600 hover:bg-red-50 flex-1 sm:flex-none"
                                                 onClick={() => handleReject(report.id)}
                                             >
                                                 Reject
                                             </Button>
                                             <Button
                                                 size="sm"
-                                                className="rounded-xl"
+                                                className="rounded-xl flex-1 sm:flex-none"
                                                 onClick={() => handleApprove(report.id)}
                                             >
                                                 Approve

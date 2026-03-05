@@ -82,9 +82,9 @@ export default function SavedReportsPage() {
     return (
         <DashboardLayout role={UserRole.SUBSCRIBER}>
             <FadeInView delay={0.1} className="space-y-8">
-                <div>
-                    <h1 className="text-3xl font-bold mb-2">My Saved Reports</h1>
-                    <p className="text-muted-foreground">Vehicle reports you've saved for reference.</p>
+                <div className="flex flex-col gap-1 px-1">
+                    <h1 className="text-2xl md:text-3xl font-bold tracking-tight">My Saved Reports</h1>
+                    <p className="text-sm md:text-base text-muted-foreground">Vehicle reports you've saved for reference.</p>
                 </div>
 
                 {loading ? (
@@ -95,51 +95,56 @@ export default function SavedReportsPage() {
                     <div className="space-y-4">
                         {savedReports.map((saved, index) => (
                             <FadeInView key={saved.id} delay={0.1 + index * 0.05}>
-                                <Card className="border-none shadow-lg rounded-2xl overflow-hidden hover:shadow-xl transition-shadow">
-                                    <CardContent className="p-6 flex items-center gap-6">
-                                        <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center">
-                                            <Car className="w-7 h-7 text-primary" />
-                                        </div>
-                                        <div className="flex-1">
-                                            <p className="font-bold text-lg">
-                                                {saved.reports?.vehicle_make} {saved.reports?.vehicle_model}
-                                            </p>
-                                            <p className="text-sm text-muted-foreground">
-                                                VIN: {saved.reports?.vehicle_vin || 'N/A'}
-                                            </p>
-                                        </div>
-                                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                            <div className="flex items-center gap-2">
-                                                <Calendar className="w-4 h-4" />
-                                                {new Date(saved.created_at).toLocaleDateString()}
+                                <Card className="border-none shadow-sm rounded-[24px] overflow-hidden hover:shadow-md transition-shadow group">
+                                    <CardContent className="p-4 md:p-6 flex flex-col sm:flex-row sm:items-center gap-4 md:gap-6">
+                                        <div className="flex items-center gap-4 flex-1 min-w-0">
+                                            <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                                                <Car className="w-6 h-6 md:w-7 md:h-7 text-primary" />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="font-bold text-base md:text-lg truncate">
+                                                    {saved.reports?.vehicle_make} {saved.reports?.vehicle_model}
+                                                </p>
+                                                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5">
+                                                    <p className="text-xs text-muted-foreground truncate">
+                                                        VIN: {saved.reports?.vehicle_vin || 'N/A'}
+                                                    </p>
+                                                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                                        <Calendar className="w-3 h-3" />
+                                                        {new Date(saved.created_at).toLocaleDateString()}
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                        <Badge variant="secondary" className="rounded-full px-4 py-1 capitalize">
-                                            {saved.reports?.status}
-                                        </Badge>
-                                        <div className="flex items-center gap-2">
-                                            <Link href={`/subscriber/reports/${saved.report_id}`}>
+
+                                        <div className="flex items-center justify-between sm:justify-end gap-3 pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-50">
+                                            <Badge variant="secondary" className="rounded-lg px-3 py-1 capitalize text-[10px] md:text-xs">
+                                                {saved.reports?.status}
+                                            </Badge>
+                                            <div className="flex items-center gap-2">
+                                                <Link href={`/subscriber/reports/${saved.report_id}`}>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        className="rounded-xl font-bold text-xs h-9"
+                                                    >
+                                                        View Report
+                                                    </Button>
+                                                </Link>
                                                 <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    className="rounded-xl font-bold border-slate-200 hover:bg-slate-50"
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-9 w-9 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-xl"
+                                                    onClick={() => handleRemove(saved.id)}
+                                                    disabled={removing === saved.id}
                                                 >
-                                                    View Report
+                                                    {removing === saved.id ? (
+                                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                                    ) : (
+                                                        <Trash2 className="w-4 h-4" />
+                                                    )}
                                                 </Button>
-                                            </Link>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                                onClick={() => handleRemove(saved.id)}
-                                                disabled={removing === saved.id}
-                                            >
-                                                {removing === saved.id ? (
-                                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                                ) : (
-                                                    <Trash2 className="w-4 h-4" />
-                                                )}
-                                            </Button>
+                                            </div>
                                         </div>
                                     </CardContent>
                                 </Card>

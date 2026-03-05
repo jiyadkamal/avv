@@ -63,12 +63,12 @@ export function Sidebar({ role, className }: SidebarProps) {
             className
         )}>
             {/* Logo */}
-            <div className="p-6">
+            <div className="p-6 md:p-8">
                 <Link href="/" className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
-                        <Car className="w-5 h-5 text-emerald-400" />
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+                        <Car className="w-6 h-6 text-emerald-400" />
                     </div>
-                    <span className="font-bold text-lg text-white tracking-tight">Vehicle Verify</span>
+                    <span className="font-bold text-xl text-white tracking-tight">Vehicle Verify</span>
                 </Link>
             </div>
 

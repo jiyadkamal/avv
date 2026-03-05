@@ -170,18 +170,84 @@ export default function ContributorDashboard() {
                         <Card className="border-none shadow-[0_2px_10px_rgba(0,0,0,0.05)] rounded-xl bg-white overflow-hidden h-full">
                             <CardHeader className="p-6 pb-2 flex flex-row items-center justify-between space-y-0">
                                 <CardTitle className="text-lg font-bold">Recent Submissions</CardTitle>
-                                <Button variant="outline" size="sm" className="rounded-lg h-9 text-xs font-bold gap-1 border-gray-200">
-                                    List View <ChevronDown className="w-3.5 h-3.5" />
-                                </Button>
+                                <Link href="/contributor/reports">
+                                    <Button variant="ghost" size="sm" className="rounded-xl text-primary font-bold gap-1">
+                                        View All
+                                        <ChevronDown className="w-3.5 h-3.5 -rotate-90" />
+                                    </Button>
+                                </Link>
                             </CardHeader>
                             <CardContent className="p-0">
-                                <div className="overflow-x-auto">
+                                {/* Mobile List View */}
+                                <div className="divide-y divide-gray-50 sm:hidden">
+                                    {loading ? (
+                                        Array(3).fill(0).map((_, i) => (
+                                            <div key={i} className="p-4 animate-pulse space-y-3">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-12 h-10 bg-muted/50 rounded-lg" />
+                                                    <div className="space-y-2 flex-1">
+                                                        <div className="h-4 bg-muted/50 rounded w-1/2" />
+                                                        <div className="h-3 bg-muted/50 rounded w-1/3" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))
+                                    ) : recentReports.length > 0 ? (
+                                        recentReports.map((report) => (
+                                            <div key={report.id} className="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
+                                                <div className="flex items-center gap-4 min-w-0">
+                                                    <div className="w-12 h-10 rounded-lg bg-gray-100 flex items-center justify-center shrink-0 overflow-hidden shadow-sm border border-gray-200/50">
+                                                        {report.images && report.images[0] ? (
+                                                            <img src={report.images[0]} alt="vehicle" className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <Car className="w-6 h-6 text-gray-400" />
+                                                        )}
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="font-bold text-gray-900 truncate">
+                                                            {report.vehicle_make} {report.vehicle_model}
+                                                        </p>
+                                                        <div className="flex items-center gap-2 mt-0.5">
+                                                            <Badge
+                                                                className={cn(
+                                                                    "rounded-md text-[10px] font-black px-1.5 py-0 border-none uppercase",
+                                                                    report.status === 'approved'
+                                                                        ? 'bg-blue-50 text-blue-600'
+                                                                        : report.status === 'pending'
+                                                                            ? 'bg-amber-50 text-amber-600'
+                                                                            : 'bg-red-50 text-red-600'
+                                                                )}
+                                                            >
+                                                                {report.status}
+                                                            </Badge>
+                                                            <span className="text-xs text-gray-400 font-bold">
+                                                                ${report.status === 'approved' ? '2.50' : '0.00'}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <Link href={`/contributor/reports/${report.id}`}>
+                                                    <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl text-gray-300 hover:text-primary hover:bg-primary/5">
+                                                        <MoreHorizontal className="w-5 h-5" />
+                                                    </Button>
+                                                </Link>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="p-8 text-center text-muted-foreground font-medium text-sm">
+                                            No recent submissions.
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Desktop Table View */}
+                                <div className="hidden md:block overflow-x-auto">
                                     <table className="w-full text-sm">
                                         <thead>
                                             <tr className="border-b border-gray-50 text-gray-400 text-xs font-bold bg-gray-50/30">
                                                 <th className="px-6 py-4 text-left">Report</th>
                                                 <th className="px-6 py-4 text-left">Status</th>
-                                                <th className="px-6 py-4 text-left">Depth</th>
+                                                <th className="px-6 py-4 text-left">Reward</th>
                                                 <th className="px-6 py-4 text-left">Date</th>
                                                 <th className="px-6 py-4 text-right"></th>
                                             </tr>
@@ -236,9 +302,11 @@ export default function ContributorDashboard() {
                                                             {new Date(report.created_at).toLocaleDateString()}
                                                         </td>
                                                         <td className="px-6 py-4 text-right">
-                                                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-gray-300 hover:text-gray-600">
-                                                                <MoreHorizontal className="w-4 h-4" />
-                                                            </Button>
+                                                            <Link href={`/contributor/reports/${report.id}`}>
+                                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-gray-300 hover:text-gray-600">
+                                                                    <MoreHorizontal className="w-4 h-4" />
+                                                                </Button>
+                                                            </Link>
                                                         </td>
                                                     </tr>
                                                 ))

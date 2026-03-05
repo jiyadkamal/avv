@@ -150,14 +150,14 @@ export default function SubscriberDashboard() {
 
                 {/* Quick Search */}
                 <Card className="border-none shadow-sm rounded-2xl overflow-hidden">
-                    <div className="bg-gradient-to-r from-muted/50 to-muted p-8">
+                    <div className="bg-gradient-to-r from-muted/50 to-muted p-6 md:p-8">
                         <div className="max-w-xl">
-                            <h2 className="text-2xl font-bold mb-2">Search Vehicle History</h2>
-                            <p className="text-muted-foreground mb-6">
+                            <h2 className="text-xl md:text-2xl font-bold mb-2">Search Vehicle History</h2>
+                            <p className="text-sm md:text-base text-muted-foreground mb-6">
                                 Enter a VIN or license plate to access comprehensive accident reports and verification history.
                             </p>
                             <Link href="/subscriber/search">
-                                <Button size="lg" className="rounded-2xl h-12 px-8 font-bold gap-2">
+                                <Button size="lg" className="rounded-2xl h-12 px-6 md:px-8 font-bold gap-2 w-full md:w-auto">
                                     <Search className="w-5 h-5" />
                                     Start Searching
                                 </Button>
@@ -188,24 +188,25 @@ export default function SubscriberDashboard() {
                             <div className="space-y-3">
                                 {savedReports.map((saved) => (
                                     <Link key={saved.id} href={`/subscriber/reports/${saved.report_id}`}>
-                                        <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer">
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center">
-                                                    <BookmarkCheck className="w-6 h-6 text-purple-600" />
+                                        <div className="flex items-center justify-between p-3 md:p-4 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer group gap-2">
+                                            <div className="flex items-center gap-3 md:gap-4 min-w-0">
+                                                <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-purple-500/10 flex items-center justify-center shrink-0">
+                                                    <BookmarkCheck className="w-5 h-5 md:w-6 md:h-6 text-purple-600" />
                                                 </div>
-                                                <div>
-                                                    <p className="font-bold">
+                                                <div className="min-w-0">
+                                                    <p className="font-bold truncate text-sm md:text-base">
                                                         {saved.reports?.vehicle_make} {saved.reports?.vehicle_model}
                                                     </p>
-                                                    <p className="text-sm text-muted-foreground flex items-center gap-2">
+                                                    <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
                                                         <Clock className="w-3 h-3" />
-                                                        Saved {new Date(saved.created_at).toLocaleDateString()}
+                                                        <span className="truncate">Saved {new Date(saved.created_at).toLocaleDateString()}</span>
                                                     </p>
                                                 </div>
                                             </div>
-                                            <Button variant="ghost" size="sm" className="rounded-xl font-bold text-primary">
+                                            <Button variant="ghost" size="sm" className="rounded-xl font-bold text-primary shrink-0 hidden sm:flex">
                                                 View Report <ChevronRight className="w-4 h-4 ml-1" />
                                             </Button>
+                                            <ChevronRight className="w-5 h-5 text-muted-foreground sm:hidden shrink-0" />
                                         </div>
                                     </Link>
                                 ))}
@@ -246,24 +247,25 @@ export default function SubscriberDashboard() {
                             <div className="space-y-3">
                                 {recentReports.map((report) => (
                                     <Link key={report.id} href={`/subscriber/reports/${report.id}`}>
-                                        <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer">
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                                                    <Car className="w-6 h-6 text-primary" />
+                                        <div className="flex items-center justify-between p-3 md:p-4 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer group gap-2">
+                                            <div className="flex items-center gap-3 md:gap-4 min-w-0">
+                                                <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                                                    <Car className="w-5 h-5 md:w-6 md:h-6 text-primary" />
                                                 </div>
-                                                <div>
-                                                    <p className="font-bold">
+                                                <div className="min-w-0">
+                                                    <p className="font-bold truncate text-sm md:text-base">
                                                         {report.vehicle_make} {report.vehicle_model}
                                                     </p>
-                                                    <p className="text-sm text-muted-foreground flex items-center gap-2">
+                                                    <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
                                                         <Clock className="w-3 h-3" />
-                                                        {new Date(report.created_at).toLocaleDateString()}
+                                                        <span className="truncate">{new Date(report.created_at).toLocaleDateString()}</span>
                                                     </p>
                                                 </div>
                                             </div>
-                                            <Button variant="ghost" size="sm" className="rounded-xl">
+                                            <Button variant="ghost" size="sm" className="rounded-xl font-bold text-primary shrink-0 hidden sm:flex">
                                                 View <ChevronRight className="w-4 h-4 ml-1" />
                                             </Button>
+                                            <ChevronRight className="w-5 h-5 text-muted-foreground sm:hidden shrink-0" />
                                         </div>
                                     </Link>
                                 ))}
