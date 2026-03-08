@@ -1,167 +1,75 @@
 'use client';
-
 import { useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { UserRole } from '@/types';
-import {
-    FileText, Calendar, Trash2, Loader2, Car
-} from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { BookmarkCheck, Trash2, Car, ExternalLink } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FadeInView } from '@/lib/animations';
-import { supabase } from '@/lib/supabase/client';
-import { useAuthStore } from '@/stores/authStore';
+import { toast } from 'sonner';
 import Link from 'next/link';
 
-interface SavedReport {
-    id: string;
-    report_id: string;
-    created_at: string;
-    reports: {
-        id: string;
-        vehicle_make: string;
-        vehicle_model: string;
-        vehicle_vin: string;
-        status: string;
-        created_at: string;
-    };
-}
-
 export default function SavedReportsPage() {
-    const { user } = useAuthStore();
-    const [savedReports, setSavedReports] = useState<SavedReport[]>([]);
+    const [saved, setSaved] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [removing, setRemoving] = useState<string | null>(null);
 
     useEffect(() => {
-        if (user?.id) {
-            fetchSavedReports();
+        async function fetchSaved() {
+            try { const res = await fetch('/api/saved-reports'); const data = await res.json(); setSaved(data.savedReports || []); }
+            catch (e) { console.error(e); }
+            setLoading(false);
         }
-    }, [user?.id]);
+        fetchSaved();
+    }, []);
 
-    const fetchSavedReports = async () => {
-        setLoading(true);
-        const { data, error } = await supabase
-            .from('saved_reports')
-            .select(`
-                id,
-                report_id,
-                created_at,
-                reports (
-                    id,
-                    vehicle_make,
-                    vehicle_model,
-                    vehicle_vin,
-                    status,
-                    created_at
-                )
-            `)
-            .eq('user_id', user?.id)
-            .order('created_at', { ascending: false });
-
-        if (!error && data) {
-            setSavedReports(data as unknown as SavedReport[]);
-        }
-        setLoading(false);
-    };
-
-    const handleRemove = async (savedReportId: string) => {
-        setRemoving(savedReportId);
-        const { error } = await supabase
-            .from('saved_reports')
-            .delete()
-            .eq('id', savedReportId);
-
-        if (!error) {
-            setSavedReports(prev => prev.filter(r => r.id !== savedReportId));
-        }
-        setRemoving(null);
+    const handleRemove = async (id: string) => {
+        try { const res = await fetch(`/api/saved-reports?report_id=${id}`, { method: 'DELETE' }); if (res.ok) { setSaved(prev => prev.filter(r => r.id !== id)); toast.success('Removed from saved'); } }
+        catch { toast.error('Failed to remove'); }
     };
 
     return (
         <DashboardLayout role={UserRole.SUBSCRIBER}>
             <FadeInView delay={0.1} className="space-y-8">
-                <div className="flex flex-col gap-1 px-1">
-                    <h1 className="text-2xl md:text-3xl font-bold tracking-tight">My Saved Reports</h1>
-                    <p className="text-sm md:text-base text-muted-foreground">Vehicle reports you've saved for reference.</p>
+                <div>
+                    <h1 className="text-2xl md:text-3xl font-bold text-slate-900 mb-1">Saved Reports</h1>
+                    <p className="text-slate-500 text-sm">Your bookmarked vehicle reports for quick access.</p>
                 </div>
 
                 {loading ? (
-                    <div className="flex items-center justify-center py-16">
-                        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                    </div>
-                ) : savedReports.length > 0 ? (
-                    <div className="space-y-4">
-                        {savedReports.map((saved, index) => (
-                            <FadeInView key={saved.id} delay={0.1 + index * 0.05}>
-                                <Card className="border-none shadow-sm rounded-[24px] overflow-hidden hover:shadow-md transition-shadow group">
-                                    <CardContent className="p-4 md:p-6 flex flex-col sm:flex-row sm:items-center gap-4 md:gap-6">
-                                        <div className="flex items-center gap-4 flex-1 min-w-0">
-                                            <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                                                <Car className="w-6 h-6 md:w-7 md:h-7 text-primary" />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{[1, 2, 3, 4].map(i => <div key={i} className="h-32 bg-slate-100 rounded-xl animate-pulse" />)}</div>
+                ) : saved.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {saved.map((r: any) => (
+                            <Card key={r.id} className="bg-white border-slate-200 shadow-sm rounded-xl hover:border-slate-300 transition-all">
+                                <CardContent className="p-5">
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div className="flex items-center gap-3 min-w-0">
+                                            <div className="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center shrink-0">
+                                                <Car className="w-5 h-5 text-indigo-600" />
                                             </div>
                                             <div className="min-w-0">
-                                                <p className="font-bold text-base md:text-lg truncate">
-                                                    {saved.reports?.vehicle_make} {saved.reports?.vehicle_model}
-                                                </p>
-                                                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5">
-                                                    <p className="text-xs text-muted-foreground truncate">
-                                                        VIN: {saved.reports?.vehicle_vin || 'N/A'}
-                                                    </p>
-                                                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                                                        <Calendar className="w-3 h-3" />
-                                                        {new Date(saved.created_at).toLocaleDateString()}
-                                                    </div>
-                                                </div>
+                                                <p className="font-semibold text-slate-900 truncate">{r.vehicle_make} {r.vehicle_model}</p>
+                                                <p className="text-xs text-slate-500">VIN: ...{r.vehicle_vin?.slice(-6) || 'N/A'}</p>
                                             </div>
                                         </div>
-
-                                        <div className="flex items-center justify-between sm:justify-end gap-3 pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-50">
-                                            <Badge variant="secondary" className="rounded-lg px-3 py-1 capitalize text-[10px] md:text-xs">
-                                                {saved.reports?.status}
-                                            </Badge>
-                                            <div className="flex items-center gap-2">
-                                                <Link href={`/subscriber/reports/${saved.report_id}`}>
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        className="rounded-xl font-bold text-xs h-9"
-                                                    >
-                                                        View Report
-                                                    </Button>
-                                                </Link>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-9 w-9 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-xl"
-                                                    onClick={() => handleRemove(saved.id)}
-                                                    disabled={removing === saved.id}
-                                                >
-                                                    {removing === saved.id ? (
-                                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                                    ) : (
-                                                        <Trash2 className="w-4 h-4" />
-                                                    )}
-                                                </Button>
-                                            </div>
+                                        <div className="flex gap-1 shrink-0">
+                                            <Link href={`/subscriber/reports/${r.report_id || r.id}`}>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-indigo-50 text-indigo-600"><ExternalLink className="w-4 h-4" /></Button>
+                                            </Link>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-red-50 text-red-500" onClick={() => handleRemove(r.id)}><Trash2 className="w-4 h-4" /></Button>
                                         </div>
-                                    </CardContent>
-                                </Card>
-                            </FadeInView>
+                                    </div>
+                                </CardContent>
+                            </Card>
                         ))}
                     </div>
                 ) : (
-                    <Card className="border-none shadow-lg rounded-2xl">
-                        <CardContent className="p-12 text-center">
-                            <FileText className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
-                            <h3 className="text-xl font-bold mb-2">No Saved Reports</h3>
-                            <p className="text-muted-foreground mb-4">
-                                Search for vehicles and save reports for easy access later.
-                            </p>
-                            <Link href="/subscriber/search">
-                                <Button className="rounded-xl">Search Vehicles</Button>
-                            </Link>
+                    <Card className="bg-white border-slate-200 rounded-xl">
+                        <CardContent className="p-16 text-center">
+                            <BookmarkCheck className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                            <h3 className="text-lg font-semibold text-slate-900 mb-1">No saved reports</h3>
+                            <p className="text-slate-500 text-sm mb-4">Save reports from search results for quick reference.</p>
+                            <Link href="/subscriber/search"><Button className="rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium">Search Vehicles</Button></Link>
                         </CardContent>
                     </Card>
                 )}

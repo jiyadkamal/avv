@@ -1,145 +1,90 @@
 'use client';
-
 import { useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { UserRole } from '@/types';
-import { Wallet, TrendingUp, Clock, DollarSign } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { DollarSign, TrendingUp, Download, ArrowUpRight, ArrowDownRight, Wallet } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { FadeInView } from '@/lib/animations';
-import { supabase } from '@/lib/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
-
-interface Earning {
-    id: string;
-    amount: number;
-    status: string;
-    created_at: string;
-}
+import { cn } from '@/lib/utils';
 
 export default function WalletPage() {
     const { user } = useAuthStore();
-    const [earnings, setEarnings] = useState<Earning[]>([]);
-    const [totalEarnings, setTotalEarnings] = useState(0);
-    const [pendingEarnings, setPendingEarnings] = useState(0);
+    const [earnings, setEarnings] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         async function fetchEarnings() {
-            if (!user?.id) return;
-
-            const { data, error } = await supabase
-                .from('earnings')
-                .select('id, amount, status, created_at')
-                .eq('profile_id', user.id)
-                .order('created_at', { ascending: false });
-
-            if (!error && data) {
-                setEarnings(data);
-                const total = data.filter(e => e.status === 'paid').reduce((sum, e) => sum + Number(e.amount), 0);
-                const pending = data.filter(e => e.status === 'pending').reduce((sum, e) => sum + Number(e.amount), 0);
-                setTotalEarnings(total);
-                setPendingEarnings(pending);
-            }
+            try { const res = await fetch('/api/earnings'); const data = await res.json(); setEarnings(data.earnings || []); }
+            catch (e) { console.error(e); }
             setLoading(false);
         }
         fetchEarnings();
-    }, [user?.id]);
+    }, []);
+
+    const totalEarned = earnings.reduce((sum, e) => sum + (e.amount || 0), 0);
 
     return (
         <DashboardLayout role={UserRole.CONTRIBUTOR}>
             <FadeInView delay={0.1} className="space-y-8">
                 <div>
-                    <h1 className="text-3xl font-bold mb-2">Wallet</h1>
-                    <p className="text-muted-foreground">Track your earnings from verified reports.</p>
+                    <h1 className="text-2xl md:text-3xl font-bold text-slate-900 mb-1">Rewards</h1>
+                    <p className="text-slate-500 text-sm">Track your earnings from approved reports.</p>
                 </div>
 
-                {/* Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <Card className="border-none shadow-xl shadow-black/5 rounded-[2rem] overflow-hidden bg-gradient-to-br from-green-500/10 to-green-500/5">
-                        <CardContent className="p-6 flex items-center gap-4">
-                            <div className="w-14 h-14 rounded-2xl bg-green-500 flex items-center justify-center">
-                                <DollarSign className="w-7 h-7 text-white" />
-                            </div>
-                            <div>
-                                <p className="text-sm text-muted-foreground font-medium">Total Earned</p>
-                                <p className="text-3xl font-bold">${totalEarnings.toFixed(2)}</p>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="border-none shadow-xl shadow-black/5 rounded-[2rem] overflow-hidden bg-gradient-to-br from-yellow-500/10 to-yellow-500/5">
-                        <CardContent className="p-6 flex items-center gap-4">
-                            <div className="w-14 h-14 rounded-2xl bg-yellow-500 flex items-center justify-center">
-                                <Clock className="w-7 h-7 text-white" />
-                            </div>
-                            <div>
-                                <p className="text-sm text-muted-foreground font-medium">Pending</p>
-                                <p className="text-3xl font-bold">${pendingEarnings.toFixed(2)}</p>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="border-none shadow-xl shadow-black/5 rounded-[2rem] overflow-hidden bg-gradient-to-br from-primary/10 to-primary/5">
-                        <CardContent className="p-6 flex items-center gap-4">
-                            <div className="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center">
-                                <TrendingUp className="w-7 h-7 text-white" />
-                            </div>
-                            <div>
-                                <p className="text-sm text-muted-foreground font-medium">Per Report</p>
-                                <p className="text-3xl font-bold">$5.00</p>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-
-                {/* Recent Transactions */}
-                <Card className="border-none shadow-xl shadow-black/5 rounded-[2rem] overflow-hidden">
-                    <CardHeader className="p-8 pb-4">
-                        <CardTitle>Recent Transactions</CardTitle>
-                        <CardDescription>Your earning history from approved reports.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-8 pt-0">
-                        {loading ? (
-                            <div className="space-y-4">
-                                {[1, 2, 3].map((i) => (
-                                    <div key={i} className="h-16 bg-muted/20 rounded-xl animate-pulse" />
-                                ))}
-                            </div>
-                        ) : earnings.length > 0 ? (
-                            <div className="space-y-4">
-                                {earnings.map((earning) => (
-                                    <div key={earning.id} className="flex items-center justify-between p-4 bg-muted/20 rounded-xl">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center">
-                                                <DollarSign className="w-5 h-5 text-green-500" />
-                                            </div>
-                                            <div>
-                                                <p className="font-medium">Report Reward</p>
-                                                <p className="text-sm text-muted-foreground">
-                                                    {new Date(earning.created_at).toLocaleDateString()}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="font-bold text-green-500">+${Number(earning.amount).toFixed(2)}</p>
-                                            <p className="text-xs text-muted-foreground capitalize">{earning.status}</p>
-                                        </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    {[
+                        { label: 'Total Earned', value: `$${totalEarned.toFixed(2)}`, icon: DollarSign, color: 'bg-emerald-50 text-emerald-600' },
+                        { label: 'Transactions', value: earnings.length, icon: TrendingUp, color: 'bg-indigo-50 text-indigo-600' },
+                        { label: 'Available', value: `$${totalEarned.toFixed(2)}`, icon: Wallet, color: 'bg-violet-50 text-violet-600' },
+                    ].map((stat, i) => (
+                        <FadeInView key={stat.label} delay={0.1 + i * 0.05}>
+                            <Card className="bg-white border-slate-200 shadow-sm rounded-xl">
+                                <CardContent className="p-5">
+                                    <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center mb-4", stat.color)}>
+                                        <stat.icon className="w-5 h-5" />
                                     </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <p className="text-center text-muted-foreground py-8">No transactions yet. Start submitting reports to earn!</p>
-                        )}
+                                    <p className="text-2xl font-bold text-slate-900">{loading ? '—' : stat.value}</p>
+                                    <p className="text-xs text-slate-500 font-medium mt-1">{stat.label}</p>
+                                </CardContent>
+                            </Card>
+                        </FadeInView>
+                    ))}
+                </div>
+
+                <Card className="bg-white border-slate-200 shadow-sm rounded-xl">
+                    <CardHeader className="px-6 py-5 pb-3">
+                        <CardTitle className="text-lg font-semibold text-slate-900">Transaction History</CardTitle>
+                    </CardHeader>
+                    <CardContent className="px-6 pb-6">
+                        {loading ? <div className="space-y-3">{[1, 2, 3].map(i => <div key={i} className="h-14 bg-slate-50 rounded-lg animate-pulse" />)}</div>
+                            : earnings.length > 0 ? (
+                                <div className="space-y-2">
+                                    {earnings.map((e: any, i: number) => (
+                                        <div key={i} className="flex items-center justify-between p-4 rounded-xl bg-slate-50 border border-slate-100">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center">
+                                                    <ArrowUpRight className="w-4 h-4 text-emerald-600" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-medium text-slate-900">{e.description || 'Report Reward'}</p>
+                                                    <p className="text-xs text-slate-500">{new Date(e.created_at).toLocaleDateString()}</p>
+                                                </div>
+                                            </div>
+                                            <span className="font-semibold text-emerald-600">+${(e.amount || 0).toFixed(2)}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-center py-12 bg-slate-50 rounded-xl border border-slate-100">
+                                    <DollarSign className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+                                    <p className="font-semibold text-slate-900 mb-1">No earnings yet</p>
+                                    <p className="text-slate-500 text-sm">Rewards will appear here when your reports are approved.</p>
+                                </div>
+                            )}
                     </CardContent>
                 </Card>
-
-                {/* Withdraw Button */}
-                <div className="flex justify-end">
-                    <Button className="rounded-2xl h-12 px-8 font-bold" disabled={totalEarnings < 10}>
-                        Withdraw Funds
-                    </Button>
-                </div>
             </FadeInView>
         </DashboardLayout>
     );

@@ -3,20 +3,9 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-    LayoutDashboard,
-    FileText,
-    FilePlus,
-    Layers,
-    Trophy,
-    Search,
-    Users,
-    BarChart3,
-    Settings,
-    ShieldCheck,
-    BookmarkCheck,
-    CreditCard,
-    MoreVertical,
-    Car
+    LayoutDashboard, FileText, FilePlus, Layers, Trophy, Search,
+    Users, BarChart3, Settings, ShieldCheck, BookmarkCheck, CreditCard,
+    Car, Wrench
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { UserRole } from '@/types';
@@ -47,71 +36,97 @@ export function Sidebar({ role, className }: SidebarProps) {
         [UserRole.SUBSCRIBER]: [
             { label: 'Search', icon: Search, href: '/subscriber/search' },
             { label: 'Saved Reports', icon: BookmarkCheck, href: '/subscriber/saved' },
+            { label: 'Workshops', icon: Wrench, href: '/subscriber/workshops' },
+        ],
+        [UserRole.WORKSHOP]: [
+            { label: 'Dashboard', icon: LayoutDashboard, href: '/workshop/dashboard' },
+            { label: 'My Workshop', icon: Wrench, href: '/workshop/listing' },
         ],
     };
 
     const items = menuItems[role] || [];
 
-    // Get user initials
     const initials = user?.full_name
         ? user.full_name.split(' ').map(n => n[0]).join('').toUpperCase()
         : 'U';
 
     return (
         <aside className={cn(
-            "flex flex-col w-64 bg-[#212f3d] text-slate-300 h-screen sticky top-0 border-none",
+            "flex flex-col w-64 bg-white text-slate-600 min-h-screen h-full border-r border-slate-200",
             className
         )}>
             {/* Logo */}
-            <div className="p-6 md:p-8">
-                <Link href="/" className="flex items-center gap-2">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
-                        <Car className="w-6 h-6 text-emerald-400" />
+            <div className="p-6 md:p-8 mb-2">
+                <Link href="/" className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-600/20">
+                        <Car className="w-5 h-5 text-white" />
                     </div>
-                    <span className="font-bold text-xl text-white tracking-tight">Vehicle Verify</span>
+                    <span className="font-bold text-xl tracking-tight">Vehicle<span className="text-indigo-600">Verify</span></span>
                 </Link>
             </div>
 
+            {/* Role badge */}
+            <div className="px-6 mb-4">
+                <div className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-100/60">
+                    <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest">{role}</p>
+                </div>
+            </div>
+
             {/* Navigation */}
-            <nav className="flex-1 px-3 py-4 space-y-1">
+            <nav className="flex-1 px-4 py-2 space-y-1">
                 {items.map((item) => {
                     const isActive = pathname === item.href;
-                    // Exclude settings from main nav if it's supposed to be separate or handle it here
                     return (
                         <Link
                             key={item.href}
                             href={item.href}
                             className={cn(
-                                "flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all group",
+                                "flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all relative group",
                                 isActive
-                                    ? "bg-slate-700/50 text-white shadow-sm"
-                                    : "text-slate-400 hover:bg-slate-700/30 hover:text-slate-200"
+                                    ? "bg-gradient-to-r from-indigo-50 to-violet-50 text-indigo-700 font-semibold border border-indigo-100/60"
+                                    : "hover:bg-slate-50 text-slate-600 hover:text-slate-900"
                             )}
                         >
                             <item.icon className={cn(
-                                "w-5 h-5 transition-colors",
-                                isActive ? "text-white" : "text-slate-500 group-hover:text-slate-400"
+                                "w-[18px] h-[18px] transition-colors",
+                                isActive ? "text-indigo-600" : "text-slate-400 group-hover:text-slate-600"
                             )} />
                             {item.label}
+                            {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-full bg-indigo-600" />}
                         </Link>
                     );
                 })}
             </nav>
 
-            {/* Footer / Settings */}
-            <div className="mt-auto flex flex-col gap-2 px-3 pb-6">
-                <Link
-                    href="/settings"
-                    className={cn(
-                        "flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all group",
-                        pathname === "/settings"
-                            ? "bg-slate-700/50 text-white"
-                            : "text-slate-400 hover:bg-slate-700/30 hover:text-slate-200"
-                    )}
-                >
-                    <Settings className="w-5 h-5 text-slate-500 group-hover:text-slate-400" />
-                    Settings
-                </Link>
+            {/* User card + Settings */}
+            <div className="mt-auto px-4 pb-6 space-y-3">
+                <div className="border-t border-slate-100 pt-4">
+                    <Link
+                        href="/settings"
+                        className={cn(
+                            "flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all",
+                            pathname === "/settings"
+                                ? "bg-gradient-to-r from-indigo-50 to-violet-50 text-indigo-700 border border-indigo-100/60"
+                                : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                        )}
+                    >
+                        <Settings className="w-[18px] h-[18px]" />
+                        Settings
+                    </Link>
+                </div>
+
+                {/* User mini card */}
+                <div className="bg-gradient-to-r from-slate-50 to-slate-100/50 rounded-xl px-4 py-3 border border-slate-200/60">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center text-white text-xs font-bold shadow-sm">
+                            {initials}
+                        </div>
+                        <div className="min-w-0">
+                            <p className="text-xs font-semibold text-slate-900 truncate">{user?.full_name || 'Guest'}</p>
+                            <p className="text-[10px] text-slate-500 truncate">{user?.email || ''}</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </aside>
     );

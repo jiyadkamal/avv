@@ -1,5 +1,4 @@
 'use client';
-
 import { useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { UserRole } from '@/types';
@@ -8,120 +7,39 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { FadeInView } from '@/lib/animations';
-import { supabase } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
-interface Report {
-    id: string;
-    contributor_id: string;
-    vehicle_vin: string;
-    vehicle_plate: string;
-    vehicle_make: string;
-    vehicle_model: string;
-    description: string;
-    severity: string;
-    status: string;
-    images: string[];
-    created_at: string;
-    profiles?: { full_name: string; email: string };
-}
-
 type StatusFilter = 'pending' | 'approved' | 'rejected';
 
 export default function ModerationPage() {
-    const [reports, setReports] = useState<Report[]>([]);
+    const [reports, setReports] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [processingId, setProcessingId] = useState<string | null>(null);
     const [activeFilter, setActiveFilter] = useState<StatusFilter>('pending');
 
-    useEffect(() => {
-        fetchReports(activeFilter);
-    }, [activeFilter]);
+    useEffect(() => { fetchReports(activeFilter); }, [activeFilter]);
 
     async function fetchReports(status: StatusFilter) {
         setLoading(true);
-        const { data, error } = await supabase
-            .from('reports')
-            .select('*')
-            .eq('status', status)
-            .order('created_at', { ascending: false });
-
-        if (error) {
-            console.error('Error fetching reports:', error);
-            toast.error('Failed to load reports');
-        }
-
-        if (data) {
-            const reportsWithProfiles = await Promise.all(
-                data.map(async (report) => {
-                    if (report.contributor_id) {
-                        const { data: profile } = await supabase
-                            .from('profiles')
-                            .select('full_name, email')
-                            .eq('id', report.contributor_id)
-                            .single();
-                        return { ...report, profiles: profile };
-                    }
-                    return report;
-                })
-            );
-            setReports(reportsWithProfiles);
-        }
+        try { const res = await fetch(`/api/reports?status=${status}`); const data = await res.json(); setReports(data.reports || []); }
+        catch (e) { console.error(e); toast.error('Failed to load reports'); }
         setLoading(false);
     }
 
-    const handleApprove = async (id: string) => {
+    const handleAction = async (id: string, action: 'approved' | 'rejected') => {
         setProcessingId(id);
-        const { error } = await supabase
-            .from('reports')
-            .update({ status: 'approved', verified_at: new Date().toISOString() })
-            .eq('id', id);
-
-        if (!error) {
-            const report = reports.find(r => r.id === id);
-            if (report) {
-                await supabase.from('earnings').insert({
-                    profile_id: report.contributor_id,
-                    amount: 5.00,
-                    status: 'pending',
-                    report_id: id,
-                    created_at: new Date().toISOString(),
-                });
-            }
-            setReports(prev => prev.filter(r => r.id !== id));
-            toast.success("Report approved!");
-        } else {
-            toast.error("Failed to approve report");
-        }
-        setProcessingId(null);
-    };
-
-    const handleReject = async (id: string) => {
-        setProcessingId(id);
-        const { error } = await supabase
-            .from('reports')
-            .update({ status: 'rejected' })
-            .eq('id', id);
-
-        if (!error) {
-            setReports(prev => prev.filter(r => r.id !== id));
-            toast.success("Report rejected");
-        } else {
-            toast.error("Failed to reject report");
-        }
+        try { const res = await fetch(`/api/reports/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: action }) }); if (res.ok) { setReports(prev => prev.filter(r => r.id !== id)); toast.success(`Report ${action}!`); } else toast.error('Failed'); }
+        catch { toast.error('Failed'); }
         setProcessingId(null);
     };
 
     const getStatusBadge = (status: string) => {
         switch (status) {
-            case 'approved':
-                return <Badge className="bg-emerald-50 text-emerald-600 border-emerald-100 rounded-full px-4 py-1"><CheckCircle className="w-3.5 h-3.5 mr-1.5" /> Approved</Badge>;
-            case 'rejected':
-                return <Badge className="bg-rose-50 text-rose-600 border-rose-100 rounded-full px-4 py-1"><XCircle className="w-3.5 h-3.5 mr-1.5" /> Rejected</Badge>;
-            default:
-                return <Badge className="bg-amber-50 text-amber-600 border-amber-100 rounded-full px-4 py-1"><Clock className="w-3.5 h-3.5 mr-1.5" /> Pending</Badge>;
+            case 'approved': return <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 rounded-full font-medium text-xs"><CheckCircle className="w-3 h-3 mr-1" />Approved</Badge>;
+            case 'rejected': return <Badge className="bg-red-50 text-red-700 border-red-200 rounded-full font-medium text-xs"><XCircle className="w-3 h-3 mr-1" />Rejected</Badge>;
+            default: return <Badge className="bg-amber-50 text-amber-700 border-amber-200 rounded-full font-medium text-xs"><Clock className="w-3 h-3 mr-1" />Pending</Badge>;
         }
     };
 
@@ -133,132 +51,79 @@ export default function ModerationPage() {
 
     return (
         <DashboardLayout role={UserRole.ADMIN}>
-            <FadeInView delay={0.1} className="space-y-8">
-                <div className="px-1">
-                    <h1 className="text-2xl md:text-3xl font-bold mb-2">Moderation Queue</h1>
-                    <p className="text-sm md:text-base text-muted-foreground">Review and verify submitted accident reports.</p>
+            <FadeInView delay={0.1} className="space-y-6">
+                <div>
+                    <h1 className="text-2xl md:text-3xl font-bold text-slate-900 mb-1">Moderation Queue</h1>
+                    <p className="text-slate-500 text-sm">Review and moderate submitted accident reports.</p>
                 </div>
 
-                {/* Status Filter Tabs */}
-                <div className="overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
-                    <div className="flex gap-2 p-1.5 bg-slate-100 rounded-2xl w-fit">
-                        {tabs.map((tab) => (
-                            <button
-                                key={tab.value}
-                                onClick={() => setActiveFilter(tab.value)}
-                                className={cn(
-                                    "flex items-center gap-2 px-4 md:px-5 py-2 md:py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all whitespace-nowrap",
-                                    activeFilter === tab.value
-                                        ? "bg-white text-slate-900 shadow-sm"
-                                        : "text-slate-500 hover:text-slate-700"
-                                )}
-                            >
-                                {tab.icon}
-                                {tab.label}
-                            </button>
-                        ))}
-                    </div>
+                <div className="flex gap-1 p-1 bg-slate-100 rounded-lg w-fit">
+                    {tabs.map(tab => (
+                        <button key={tab.value} onClick={() => setActiveFilter(tab.value)} className={cn(
+                            "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all",
+                            activeFilter === tab.value ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                        )}>
+                            {tab.icon}{tab.label}
+                        </button>
+                    ))}
                 </div>
 
                 {loading ? (
-                    <div className="space-y-4">
-                        {[1, 2, 3].map(i => (
-                            <Card key={i} className="border-none shadow-lg rounded-2xl animate-pulse">
-                                <CardContent className="p-6 h-32 bg-muted/20" />
-                            </Card>
-                        ))}
-                    </div>
+                    <div className="space-y-4">{[1, 2, 3].map(i => <div key={i} className="h-40 bg-slate-100 rounded-xl animate-pulse" />)}</div>
                 ) : reports.length > 0 ? (
-                    <div className="space-y-6">
-                        {reports.map((report) => (
-                            <Card key={report.id} className="border-none shadow-xl shadow-black/5 rounded-[2rem] overflow-hidden">
-                                <CardHeader className="p-5 md:p-6 pb-4 border-b">
+                    <div className="space-y-4">
+                        {reports.map((r: any) => (
+                            <Card key={r.id} className="bg-white border-slate-200 shadow-sm rounded-xl hover:border-slate-300 transition-all">
+                                <CardHeader className="p-6 pb-3">
                                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                                         <div className="flex items-center gap-4">
-                                            <div className={cn(
-                                                "w-12 h-12 md:w-14 md:h-14 rounded-xl md:rounded-2xl flex items-center justify-center shrink-0",
-                                                activeFilter === 'pending' && "bg-yellow-500/10",
-                                                activeFilter === 'approved' && "bg-emerald-500/10",
-                                                activeFilter === 'rejected' && "bg-rose-500/10"
+                                            <div className={cn("w-11 h-11 rounded-lg flex items-center justify-center",
+                                                activeFilter === 'pending' ? "bg-amber-50 text-amber-600" :
+                                                    activeFilter === 'approved' ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"
                                             )}>
-                                                <FileText className={cn(
-                                                    "w-6 h-6 md:w-7 md:h-7",
-                                                    activeFilter === 'pending' && "text-yellow-500",
-                                                    activeFilter === 'approved' && "text-emerald-500",
-                                                    activeFilter === 'rejected' && "text-rose-500"
-                                                )} />
+                                                <FileText className="w-5 h-5" />
                                             </div>
-                                            <div className="min-w-0">
-                                                <CardTitle className="text-base md:text-lg truncate">{report.vehicle_make} {report.vehicle_model}</CardTitle>
-                                                <p className="text-xs md:text-sm text-muted-foreground">VIN: {report.vehicle_vin || 'N/A'}</p>
-                                                <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5">
-                                                    By: {report.profiles?.full_name || 'Unknown'}
-                                                </p>
+                                            <div>
+                                                <CardTitle className="text-lg font-semibold text-slate-900">{r.vehicle_make} {r.vehicle_model}</CardTitle>
+                                                <p className="text-xs text-slate-500 mt-0.5">VIN: {r.vehicle_vin || 'N/A'}</p>
                                             </div>
                                         </div>
-                                        <div className="shrink-0 scale-90 origin-left sm:scale-100 sm:origin-right">
-                                            {getStatusBadge(report.status)}
-                                        </div>
+                                        {getStatusBadge(r.status)}
                                     </div>
                                 </CardHeader>
-                                <CardContent className="p-6 space-y-4">
-                                    {report.description && (
-                                        <div>
-                                            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">Description</p>
-                                            <p className="text-sm">{report.description}</p>
+                                <CardContent className="p-6 pt-3 space-y-4">
+                                    {r.description && (
+                                        <div className="bg-slate-50 rounded-lg p-4 border border-slate-100">
+                                            <p className="text-sm text-slate-600 leading-relaxed">{r.description}</p>
                                         </div>
                                     )}
-
-                                    <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                                        <div className="flex items-center gap-2">
-                                            <Calendar className="w-4 h-4" />
-                                            {new Date(report.created_at).toLocaleDateString()}
-                                        </div>
-                                        {report.severity && (
-                                            <Badge variant="outline" className="rounded-full">{report.severity}</Badge>
-                                        )}
+                                    <div className="flex items-center gap-6 text-xs text-slate-500">
+                                        <div className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" />{new Date(r.created_at).toLocaleDateString()}</div>
+                                        {r.severity && <Badge variant="outline" className="rounded-full text-xs border-slate-200">{r.severity}</Badge>}
                                     </div>
-
-                                    {report.images && report.images.length > 0 && (
-                                        <div className="grid grid-cols-2 xs:grid-cols-4 gap-2 pt-2">
-                                            {report.images.slice(0, 4).map((img, i) => (
-                                                <div key={i} className="aspect-square rounded-xl overflow-hidden bg-muted">
+                                    {r.images?.length > 0 && (
+                                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                                            {r.images.slice(0, 4).map((img: string, i: number) => (
+                                                <div key={i} className="aspect-square rounded-lg overflow-hidden border border-slate-200 bg-slate-50">
                                                     <img src={img} alt={`Evidence ${i + 1}`} className="w-full h-full object-cover" />
                                                 </div>
                                             ))}
                                         </div>
                                     )}
-
-                                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-4 border-t">
+                                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-4 border-t border-slate-100">
                                         {activeFilter === 'pending' && (
-                                            <div className="flex items-center gap-2 flex-1">
-                                                <Button
-                                                    className="flex-1 rounded-xl h-11 px-6 font-bold bg-green-600 hover:bg-green-700 h-12 md:h-11"
-                                                    onClick={() => handleApprove(report.id)}
-                                                    disabled={processingId === report.id}
-                                                >
-                                                    {processingId === report.id ? (
-                                                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                                                    ) : (
-                                                        <CheckCircle className="w-4 h-4 mr-2" />
-                                                    )}
-                                                    Approve
+                                            <div className="flex gap-2 flex-1">
+                                                <Button className="flex-1 rounded-lg h-10 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm" onClick={() => handleAction(r.id, 'approved')} disabled={processingId === r.id}>
+                                                    {processingId === r.id ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CheckCircle className="w-4 h-4 mr-1.5" />}Approve
                                                 </Button>
-                                                <Button
-                                                    variant="outline"
-                                                    className="flex-1 rounded-xl h-12 md:h-11 px-6 font-bold text-red-600 hover:bg-red-50 border-red-200"
-                                                    onClick={() => handleReject(report.id)}
-                                                    disabled={processingId === report.id}
-                                                >
-                                                    <XCircle className="w-4 h-4 mr-2" />
-                                                    Reject
+                                                <Button variant="outline" className="flex-1 rounded-lg h-10 text-red-600 hover:bg-red-50 border-red-200 font-medium text-sm" onClick={() => handleAction(r.id, 'rejected')} disabled={processingId === r.id}>
+                                                    <XCircle className="w-4 h-4 mr-1.5" />Reject
                                                 </Button>
                                             </div>
                                         )}
-                                        <Link href={`/admin/moderation/${report.id}`} className={cn("inline-block", activeFilter === 'pending' ? "sm:ml-auto" : "w-full")}>
-                                            <Button variant="ghost" className="w-full rounded-xl h-12 md:h-11 px-5 font-bold text-primary gap-1">
-                                                View Details
-                                                <ChevronRight className="w-4 h-4" />
+                                        <Link href={`/admin/moderation/${r.id}`} className={cn(activeFilter === 'pending' ? "sm:ml-auto" : "w-full")}>
+                                            <Button variant="ghost" className="w-full rounded-lg h-10 text-indigo-600 hover:bg-indigo-50 gap-1 font-medium text-sm">
+                                                View Details <ChevronRight className="w-4 h-4" />
                                             </Button>
                                         </Link>
                                     </div>
@@ -267,17 +132,13 @@ export default function ModerationPage() {
                         ))}
                     </div>
                 ) : (
-                    <Card className="border-none shadow-lg rounded-2xl">
-                        <CardContent className="p-12 text-center">
-                            <ShieldCheck className="w-16 h-16 text-green-500/30 mx-auto mb-4" />
-                            <h3 className="text-xl font-bold mb-2">
-                                {activeFilter === 'pending' ? 'All Caught Up!' : `No ${activeFilter} reports`}
-                            </h3>
-                            <p className="text-muted-foreground">
-                                {activeFilter === 'pending'
-                                    ? 'No pending reports to review.'
-                                    : `There are no ${activeFilter} reports in the system.`}
-                            </p>
+                    <Card className="bg-white border-slate-200 rounded-xl">
+                        <CardContent className="p-16 text-center">
+                            <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4">
+                                <ShieldCheck className="w-7 h-7 text-slate-400" />
+                            </div>
+                            <h3 className="text-lg font-semibold text-slate-900 mb-1">Queue Clear</h3>
+                            <p className="text-slate-500 text-sm">{activeFilter === 'pending' ? 'All reports have been reviewed.' : `No ${activeFilter} reports found.`}</p>
                         </CardContent>
                     </Card>
                 )}

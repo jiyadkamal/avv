@@ -1,103 +1,79 @@
 'use client';
-
 import { useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { UserRole } from '@/types';
-import { FileText, Calendar, Clock, AlertCircle, ChevronRight } from 'lucide-react';
+import { FileText, CheckCircle2, XCircle, Clock, ChevronRight, Loader2, Plus } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { FadeInView } from '@/lib/animations';
 import { Button } from '@/components/ui/button';
-import Link from 'next/link';
-import { supabase } from '@/lib/supabase/client';
+import { FadeInView } from '@/lib/animations';
 import { useAuthStore } from '@/stores/authStore';
+import Link from 'next/link';
 import { cn } from '@/lib/utils';
-
-interface Report {
-    id: string;
-    vehicle_vin: string;
-    vehicle_make: string;
-    vehicle_model: string;
-    status: string;
-    created_at: string;
-}
 
 export default function ContributorReportsPage() {
     const { user } = useAuthStore();
-    const [reports, setReports] = useState<Report[]>([]);
+    const [reports, setReports] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         async function fetchReports() {
-            if (!user?.id) return;
-
-            const { data, error } = await supabase
-                .from('reports')
-                .select('id, vehicle_vin, vehicle_make, vehicle_model, status, created_at')
-                .eq('contributor_id', user.id)
-                .order('created_at', { ascending: false });
-
-            if (!error && data) {
-                setReports(data);
-            }
+            if (!user?.id) { setLoading(false); return; }
+            try { const res = await fetch(`/api/reports?contributor_id=${user.id}`); const data = await res.json(); setReports(data.reports || []); }
+            catch (e) { console.error(e); }
             setLoading(false);
         }
         fetchReports();
     }, [user?.id]);
 
-    const getStatusColor = (status: string) => {
+    const getStatusBadge = (status: string) => {
         switch (status) {
-            case 'approved': return 'bg-green-500/10 text-green-500';
-            case 'rejected': return 'bg-red-500/10 text-red-500';
-            default: return 'bg-yellow-500/10 text-yellow-500';
+            case 'approved': return <Badge className="bg-emerald-50 text-emerald-700 border-0 rounded-full font-medium text-xs"><CheckCircle2 className="w-3 h-3 mr-1" />Approved</Badge>;
+            case 'rejected': return <Badge className="bg-red-50 text-red-700 border-0 rounded-full font-medium text-xs"><XCircle className="w-3 h-3 mr-1" />Rejected</Badge>;
+            default: return <Badge className="bg-amber-50 text-amber-700 border-0 rounded-full font-medium text-xs"><Clock className="w-3 h-3 mr-1" />Pending</Badge>;
         }
     };
 
     return (
         <DashboardLayout role={UserRole.CONTRIBUTOR}>
             <FadeInView delay={0.1} className="space-y-8">
-                <div className="px-1">
-                    <h1 className="text-2xl md:text-3xl font-bold mb-2">My Reports</h1>
-                    <p className="text-sm md:text-base text-muted-foreground">View and track all your submitted accident reports.</p>
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                    <div>
+                        <h1 className="text-2xl md:text-3xl font-bold text-slate-900 mb-1">My Reports</h1>
+                        <p className="text-slate-500 text-sm">All your submitted accident reports.</p>
+                    </div>
+                    <Link href="/contributor/upload">
+                        <Button className="rounded-lg h-10 px-5 font-semibold gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm">
+                            <Plus className="w-4 h-4" />New Report
+                        </Button>
+                    </Link>
                 </div>
 
                 {loading ? (
-                    <div className="space-y-4">
-                        {[1, 2, 3].map((i) => (
-                            <Card key={i} className="border-none shadow-lg rounded-2xl animate-pulse">
-                                <CardContent className="p-6 h-24 bg-muted/20" />
-                            </Card>
-                        ))}
-                    </div>
+                    <div className="flex items-center justify-center py-16"><Loader2 className="w-8 h-8 animate-spin text-indigo-600" /></div>
                 ) : reports.length > 0 ? (
-                    <div className="space-y-4">
-                        {reports.map((report, index) => (
-                            <FadeInView key={report.id} delay={0.1 + index * 0.05}>
-                                <Link href={`/contributor/reports/${report.id}`}>
-                                    <Card className="border-none shadow-sm rounded-2xl md:rounded-3xl overflow-hidden hover:shadow-md transition-all active:scale-[0.98]">
-                                        <CardContent className="p-4 md:p-6 flex flex-col sm:flex-row sm:items-center gap-4 md:gap-6">
-                                            <div className="flex items-center gap-4 flex-1">
-                                                <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
-                                                    <FileText className="w-6 h-6 md:w-7 md:h-7 text-primary" />
+                    <div className="space-y-3">
+                        {reports.map((r: any, i: number) => (
+                            <FadeInView key={r.id} delay={0.05 + i * 0.03}>
+                                <Link href={`/contributor/reports/${r.id}`}>
+                                    <Card className="bg-white border-slate-200 shadow-sm rounded-xl hover:border-slate-300 hover:shadow-md transition-all cursor-pointer">
+                                        <CardContent className="p-5">
+                                            <div className="flex items-center justify-between gap-4">
+                                                <div className="flex items-center gap-4 min-w-0">
+                                                    <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center shrink-0",
+                                                        r.status === 'approved' ? "bg-emerald-50 text-emerald-600" :
+                                                            r.status === 'rejected' ? "bg-red-50 text-red-600" : "bg-amber-50 text-amber-600"
+                                                    )}>
+                                                        <FileText className="w-5 h-5" />
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="font-semibold text-slate-900 truncate">{r.vehicle_make} {r.vehicle_model}</p>
+                                                        <p className="text-xs text-slate-500 mt-0.5">VIN: ...{r.vehicle_vin?.slice(-8) || 'N/A'} • {new Date(r.created_at).toLocaleDateString()}</p>
+                                                    </div>
                                                 </div>
-                                                <div className="min-w-0">
-                                                    <p className="font-bold text-base md:text-lg truncate">
-                                                        {report.vehicle_make} {report.vehicle_model}
-                                                    </p>
-                                                    <p className="text-xs md:text-sm text-muted-foreground truncate uppercase tracking-wider font-medium">VIN: {report.vehicle_vin}</p>
-                                                </div>
-                                            </div>
-
-                                            <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-6 border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-50">
-                                                <div className="flex items-center gap-1.5 md:gap-2 text-[10px] md:text-sm text-slate-400 font-bold uppercase tracking-tight">
-                                                    <Calendar className="w-3.5 h-3.5" />
-                                                    {new Date(report.created_at).toLocaleDateString('en-GB')}
-                                                </div>
-                                                <div className="flex items-center gap-3">
-                                                    <Badge className={cn("rounded-full px-3 md:px-4 py-0.5 md:py-1 font-bold text-[10px] md:text-xs shadow-none border-none", getStatusColor(report.status))}>
-                                                        {report.status}
-                                                    </Badge>
-                                                    <ChevronRight className="w-4 h-4 text-slate-300 hidden sm:block" />
+                                                <div className="flex items-center gap-3 shrink-0">
+                                                    {getStatusBadge(r.status)}
+                                                    <ChevronRight className="w-4 h-4 text-slate-400" />
                                                 </div>
                                             </div>
                                         </CardContent>
@@ -107,11 +83,12 @@ export default function ContributorReportsPage() {
                         ))}
                     </div>
                 ) : (
-                    <Card className="border-none shadow-lg rounded-2xl">
-                        <CardContent className="p-12 text-center">
-                            <AlertCircle className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
-                            <h3 className="text-xl font-bold mb-2">No Reports Yet</h3>
-                            <p className="text-muted-foreground">Start contributing by submitting your first accident report.</p>
+                    <Card className="bg-white border-slate-200 rounded-xl border-dashed">
+                        <CardContent className="p-16 text-center">
+                            <FileText className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                            <h3 className="text-lg font-semibold text-slate-900 mb-1">No reports yet</h3>
+                            <p className="text-slate-500 text-sm mb-6">Submit your first accident report to get started.</p>
+                            <Link href="/contributor/upload"><Button className="rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold gap-2"><Plus className="w-4 h-4" />New Report</Button></Link>
                         </CardContent>
                     </Card>
                 )}

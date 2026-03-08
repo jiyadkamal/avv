@@ -2,6 +2,7 @@ export enum UserRole {
     ADMIN = 'admin',
     CONTRIBUTOR = 'contributor',
     SUBSCRIBER = 'subscriber',
+    WORKSHOP = 'workshop',
 }
 
 export enum ReportStatus {
@@ -17,6 +18,18 @@ export interface User {
     role: UserRole;
     avatar_url?: string;
     created_at: string;
+}
+
+export interface Workshop {
+    id: string;
+    owner_id: string;
+    name: string;
+    state: string;
+    district: string;
+    description: string;
+    images: string[];
+    created_at: string;
+    updated_at?: string;
 }
 
 export interface AccidentReport {
