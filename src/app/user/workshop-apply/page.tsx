@@ -104,7 +104,7 @@ export default function WorkshopApplyPage() {
                             </div>
                         </CardContent>
                     </Card>
-                ) : user.workshop_status === WorkshopStatus.PENDING || user.workshop_status === 'pending' ? (
+                ) : user.workshop_status === WorkshopStatus.PENDING ? (
                     <Card className="border-none shadow-sm rounded-3xl bg-blue-50 border border-blue-100">
                         <CardContent className="p-8 text-center space-y-4">
                             <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto text-white">
