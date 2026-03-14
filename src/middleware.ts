@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 export function middleware(request: NextRequest) {
-    const token = request.cookies.get('auth_token')?.value;
+    const token = request.cookies.get('firebase_token')?.value;
     const { pathname } = request.nextUrl;
 
     // Public routes
@@ -11,7 +11,7 @@ export function middleware(request: NextRequest) {
     }
 
     // Protect dashboard routes
-    if (!token && (pathname.startsWith('/admin') || pathname.startsWith('/contributor') || pathname.startsWith('/subscriber') || pathname.startsWith('/settings'))) {
+    if (!token && (pathname.startsWith('/admin') || pathname.startsWith('/user') || pathname.startsWith('/settings'))) {
         return NextResponse.redirect(new URL('/login', request.url));
     }
 

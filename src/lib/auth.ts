@@ -1,30 +1,42 @@
-import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret';
+import admin from '@/lib/firebase/admin';
 
 export interface AuthUser {
     id: string;
     email: string;
     full_name: string;
     role: string;
-}
-
-export function signToken(payload: AuthUser): string {
-    return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
-}
-
-export function verifyToken(token: string): AuthUser | null {
-    try {
-        return jwt.verify(token, JWT_SECRET) as AuthUser;
-    } catch {
-        return null;
-    }
+    account_tier: string;
+    is_workshop: boolean;
+    workshop_status: string;
 }
 
 export async function getAuthUser(): Promise<AuthUser | null> {
     const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
+    const token = cookieStore.get('firebase_token')?.value;
     if (!token) return null;
-    return verifyToken(token);
+
+    try {
+        // Verify Firebase session cookie (long-lived, created by createSessionCookie)
+        const decoded = await admin.auth().verifySessionCookie(token, true);
+        const uid = decoded.uid;
+
+        // Get profile from Firestore
+        const doc = await admin.firestore().collection('profiles').doc(uid).get();
+        if (!doc.exists) return null;
+
+        const data = doc.data()!;
+        return {
+            id: uid,
+            email: data.email || decoded.email || '',
+            full_name: data.full_name || '',
+            role: data.role || 'user',
+            account_tier: data.account_tier || 'free',
+            is_workshop: data.is_workshop || false,
+            workshop_status: data.workshop_status || 'none',
+        };
+    } catch (error) {
+        console.error('Auth verification failed:', error);
+        return null;
+    }
 }

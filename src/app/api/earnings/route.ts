@@ -9,9 +9,10 @@ export async function GET() {
     try {
         const snap = await adminDb.collection('earnings')
             .where('profile_id', '==', user.id)
-            .orderBy('created_at', 'desc')
             .get();
-        const earnings = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const earnings = snap.docs
+            .map(doc => ({ id: doc.id, ...doc.data() }))
+            .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
         return NextResponse.json({ earnings });
     } catch (error: any) {
         console.error('GET earnings error:', error);

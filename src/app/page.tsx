@@ -1,7 +1,8 @@
 'use client';
 
 import { useAuthStore } from '@/stores/authStore';
-import { motion } from 'framer-motion';
+import { UserRole } from '@/types';
+import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -9,119 +10,163 @@ import {
   Globe, FileText, Star, ChevronRight, Wrench, MapPin, Award, TrendingUp,
   Camera, DollarSign, Eye, Sparkles, BadgeCheck, Heart, Calendar
 } from 'lucide-react';
+import React, { useRef } from 'react';
 
 const fadeUp = { initial: { opacity: 0, y: 30 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true } };
 
 export default function LandingPage() {
   const { user } = useAuthStore();
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  // 3D Physics values
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+
+  const mouseXSpring = useSpring(x);
+  const mouseYSpring = useSpring(y);
+
+  const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ["10deg", "-10deg"]);
+  const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-10deg", "10deg"]);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    const width = rect.width;
+    const height = rect.height;
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    const xPct = mouseX / width - 0.5;
+    const yPct = mouseY / height - 0.5;
+    x.set(xPct);
+    y.set(yPct);
+  };
+
+  const handleMouseLeave = () => {
+    x.set(0);
+    y.set(0);
+  };
 
   return (
-    <div className="min-h-screen bg-white text-slate-900 font-sans overflow-x-hidden">
+    <div className="min-h-screen bg-slate-50/50 text-slate-900 font-sans overflow-x-hidden">
       {/* Navigation */}
-      <nav className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 border-b border-slate-100">
-        <div className="flex items-center justify-between px-6 md:px-12 py-4 max-w-7xl mx-auto">
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-600/20">
+      <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-7xl px-4">
+        <nav className="backdrop-blur-2xl bg-slate-950/90 border border-white/10 rounded-[2rem] shadow-2xl shadow-indigo-500/10 flex items-center justify-between px-8 py-3.5 transition-all duration-500">
+          <Link href="/" className="flex items-center gap-3 group">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-600 via-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-600/30 group-hover:scale-110 transition-transform duration-300">
               <Car className="w-5 h-5 text-white" />
             </div>
-            <span className="font-bold text-xl tracking-tight text-slate-900">Vehicle<span className="text-indigo-600">Verify</span></span>
+            <span className="font-bold text-2xl tracking-tight text-white">Vehicle<span className="text-indigo-400">Verify</span></span>
           </Link>
 
-          <div className="hidden lg:flex items-center gap-8">
-            <Link href="#features" className="text-sm font-medium text-slate-500 hover:text-indigo-600 transition-colors">Features</Link>
-            <Link href="#how-it-works" className="text-sm font-medium text-slate-500 hover:text-indigo-600 transition-colors">How It Works</Link>
-            <Link href="#workshops" className="text-sm font-medium text-slate-500 hover:text-indigo-600 transition-colors">Workshops</Link>
-            <Link href="/login" className="text-sm font-medium text-slate-500 hover:text-indigo-600 transition-colors">Sign In</Link>
+          <div className="hidden lg:flex items-center gap-10">
+            <Link href="#features" className="text-sm font-bold text-slate-400 hover:text-white transition-all hover:scale-105 active:scale-95">Features</Link>
+            <Link href="#how-it-works" className="text-sm font-bold text-slate-400 hover:text-white transition-all hover:scale-105 active:scale-95">How It Works</Link>
+            <Link href="#workshops" className="text-sm font-bold text-slate-400 hover:text-white transition-all hover:scale-105 active:scale-95">Workshops</Link>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
+            <Link href="/login" className="hidden sm:block text-sm font-bold text-slate-400 hover:text-white transition-colors">Sign In</Link>
             {user ? (
-              <Link href={user.role === 'admin' ? '/admin/dashboard' : user.role === 'contributor' ? '/contributor/dashboard' : user.role === 'workshop' ? '/workshop/dashboard' : '/subscriber/dashboard'}
-                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-semibold transition-all text-sm shadow-lg shadow-indigo-600/20">
+              <Link href={user.role === UserRole.ADMIN ? '/admin/dashboard' : '/user/dashboard'}
+                className="px-6 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-black transition-all text-xs uppercase tracking-widest shadow-lg shadow-indigo-600/20 hover:-translate-y-0.5 active:scale-95">
                 Dashboard
               </Link>
             ) : (
               <Link href="/register"
-                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-semibold transition-all text-sm shadow-lg shadow-indigo-600/20">
-                Get Started <ArrowRight className="w-3.5 h-3.5 inline ml-1" />
+                className="px-6 py-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-black transition-all text-xs uppercase tracking-widest shadow-lg shadow-indigo-600/20 hover:-translate-y-0.5 active:scale-95">
+                Get Started
               </Link>
             )}
           </div>
-        </div>
-      </nav>
+        </nav>
+      </div>
 
       {/* Hero — Text-First, CSS-Driven */}
-      <section className="relative pt-24 pb-20 px-6 overflow-hidden bg-white">
-        {/* Subtle animated gradient mesh */}
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-bl from-indigo-100/50 via-violet-100/30 to-transparent rounded-full blur-[100px]" />
-        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-gradient-to-tr from-cyan-100/30 via-indigo-50/20 to-transparent rounded-full blur-[100px]" />
-
+      <section className="relative pt-44 pb-32 px-6 overflow-hidden bg-slate-950">
+        {/* Refined mesh gradients for dark mode */}
+        <div className="absolute top-0 right-0 w-[1000px] h-[1000px] bg-gradient-to-bl from-indigo-900/30 via-violet-900/10 to-transparent rounded-full blur-[150px] opacity-60" />
+        <div className="absolute top-1/2 left-0 -translate-y-1/2 w-[800px] h-[800px] bg-indigo-600/5 rounded-full blur-[120px] opacity-40" />
+        <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-violet-600/5 rounded-full blur-[100px] opacity-30" />
+        
         <div className="max-w-7xl mx-auto relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
             {/* Left — Text */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-50 text-indigo-700 text-xs font-bold mb-8 border border-indigo-100">
-                <span className="relative flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-500 opacity-75" /><span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500" /></span>
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-500/10 text-indigo-300 text-xs font-bold mb-8 border border-white/5">
+                <span className="relative flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75" /><span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-400" /></span>
                 50,000+ verified reports
               </div>
 
-              <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold leading-[0.95] tracking-tight mb-6 text-slate-900">
-                Don&apos;t buy a car{' '}
-                <span className="bg-gradient-to-r from-indigo-600 via-violet-600 to-indigo-500 bg-clip-text text-transparent">without its history.</span>
+              <h1 className="text-6xl md:text-7xl lg:text-8xl font-black leading-[0.9] tracking-tighter mb-8 text-white">
+                The standard for{' '}
+                <span className="bg-gradient-to-r from-indigo-400 via-indigo-300 to-violet-400 bg-clip-text text-transparent">vehicle transparency.</span>
               </h1>
 
-              <p className="text-lg text-slate-500 mb-10 max-w-md leading-relaxed">
-                Search any vehicle by VIN or plate number. Get admin-verified accident records, damage photos, and full severity reports.
+              <p className="text-xl text-slate-400 mb-12 max-w-lg leading-relaxed font-medium">
+                Access Indonesia&apos;s most comprehensive database of admin-verified accident logs, workshop service records, and real-time vehicle history.
               </p>
 
               {/* Search Bar CTA */}
-              <Link href="/subscriber/search" className="group flex items-center gap-3 bg-slate-50 border-2 border-slate-200 rounded-2xl px-5 py-4 hover:border-indigo-300 hover:shadow-lg hover:shadow-indigo-500/5 transition-all max-w-md">
-                <Search className="w-5 h-5 text-slate-400 shrink-0" />
-                <span className="text-slate-400 text-sm font-medium flex-1 text-left">Enter VIN or plate number...</span>
-                <span className="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-xs font-bold group-hover:from-indigo-500 group-hover:to-violet-500 transition-all shadow-md shadow-indigo-500/20 whitespace-nowrap">
+              <Link href="/subscriber/search" className="group flex items-center gap-4 bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl px-6 py-5 hover:bg-white/10 hover:border-indigo-500/50 hover:shadow-2xl hover:shadow-indigo-500/10 transition-all max-w-md">
+                <Search className="w-6 h-6 text-slate-500 shrink-0 group-hover:text-indigo-400 transition-colors" />
+                <span className="text-slate-500 text-base font-medium flex-1 text-left">Enter VIN or plate number...</span>
+                <span className="px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-black uppercase tracking-widest group-hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-600/20 whitespace-nowrap">
                   Search →
                 </span>
               </Link>
 
               {/* Stats */}
-              <div className="flex items-center gap-8 mt-10 pt-8 border-t border-slate-100">
+              <div className="flex items-center gap-12 mt-12 pt-10 border-t border-white/5">
                 {[
                   { value: '50K+', label: 'Reports Filed' },
                   { value: '12K+', label: 'Active Users' },
                   { value: '99.9%', label: 'Accuracy' },
                 ].map((stat, i) => (
                   <div key={stat.label}>
-                    <p className="text-2xl font-extrabold text-slate-900">{stat.value}</p>
-                    <p className="text-xs text-slate-500 font-medium">{stat.label}</p>
+                    <p className="text-3xl font-black text-white tracking-tighter mb-1">{stat.value}</p>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{stat.label}</p>
                   </div>
                 ))}
               </div>
             </motion.div>
 
-            {/* Right — CSS UI Preview Cards */}
-            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.7, delay: 0.2 }} className="relative hidden lg:block">
-              <div className="relative">
-                <div className="rounded-2xl overflow-hidden border border-slate-200 shadow-xl shadow-slate-200/50">
-                  <Image src="/landing/hero.png" alt="Vehicle Verification" width={600} height={450} className="w-full h-auto block rounded-2xl" priority />
+            {/* Right — CSS UI Preview Cards with 3D Pop-out Physics */}
+            <motion.div initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8, delay: 0.2 }} 
+              className="relative hidden lg:block [perspective:1500px]">
+              <motion.div 
+                ref={cardRef}
+                onMouseMove={handleMouseMove}
+                onMouseLeave={handleMouseLeave}
+                style={{ rotateY, rotateX }}
+                className="relative [preserve-3d] transition-all duration-100 ease-out cursor-pointer"
+              >
+                {/* Main Card with deep 3D shadow */}
+                <div className="rounded-[3rem] overflow-hidden border border-white/10 shadow-[0_50px_100px_-20px_rgba(79,70,229,0.3)] p-2 bg-gradient-to-br from-white/15 to-transparent backdrop-blur-md relative z-0">
+                  <Image src="/landing/hero-car.png" alt="Vehicle Verification" width={800} height={550} className="w-full h-auto block rounded-[2.5rem] brightness-110 pointer-events-none" priority />
+                  
+                  {/* Internal gloss overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500/20 via-transparent to-white/10 pointer-events-none" />
                 </div>
 
-                {/* Floating badge — top right */}
-                <motion.div animate={{ y: [0, -6, 0] }} transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                  className="absolute -top-4 -right-4 bg-white rounded-xl px-4 py-2.5 shadow-lg border border-slate-100 flex items-center gap-2 z-10">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center"><CheckCircle2 className="w-4 h-4 text-emerald-600" /></div>
-                  <div><p className="text-[11px] font-bold text-slate-900">Admin Approved</p><p className="text-[9px] text-slate-500">2 reports verified</p></div>
+                {/* Floating badge — top right (Popping out more) */}
+                <motion.div 
+                  style={{ translateZ: "100px" }}
+                  className="absolute -top-10 -right-10 bg-slate-900/95 backdrop-blur-2xl rounded-[2.5rem] px-8 py-5 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.6)] border border-white/10 flex items-center gap-5 z-20 pointer-events-none transition-transform duration-300">
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 flex items-center justify-center shadow-inner"><CheckCircle2 className="w-6 h-6 text-emerald-400" /></div>
+                  <div><p className="text-base font-black text-white tracking-tight">Admin Approved</p><p className="text-xs text-slate-400 font-bold">Verified History</p></div>
                 </motion.div>
 
-                {/* Floating badge — bottom left */}
-                <motion.div animate={{ y: [0, 6, 0] }} transition={{ duration: 3.5, repeat: Infinity, delay: 1, ease: 'easeInOut' }}
-                  className="absolute -bottom-3 -left-4 bg-white rounded-xl px-4 py-2.5 shadow-lg border border-slate-100 flex items-center gap-2 z-10">
-                  <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center"><TrendingUp className="w-4 h-4 text-indigo-600" /></div>
-                  <div><p className="text-[11px] font-bold text-slate-900">99.9% Accurate</p><p className="text-[9px] text-slate-500">Verified data</p></div>
+                {/* Floating badge — bottom left (Popping out slightly less for depth) */}
+                <motion.div 
+                  style={{ translateZ: "60px" }}
+                  className="absolute -bottom-10 -left-10 bg-slate-900/95 backdrop-blur-2xl rounded-[2.5rem] px-8 py-5 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.6)] border border-white/10 flex items-center gap-5 z-20 pointer-events-none transition-transform duration-300">
+                  <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 flex items-center justify-center shadow-inner"><TrendingUp className="w-6 h-6 text-indigo-400" /></div>
+                  <div><p className="text-base font-black text-white tracking-tight">99.9% Secure</p><p className="text-xs text-slate-400 font-bold">Encrypted Logs</p></div>
                 </motion.div>
 
-                {/* Decorative gradient ring behind card */}
-                <div className="absolute -inset-4 bg-gradient-to-br from-indigo-100/40 via-violet-100/20 to-cyan-100/30 rounded-3xl -z-10 blur-sm" />
-              </div>
+                {/* Background decorative glow */}
+                <div className="absolute -inset-20 bg-indigo-500/25 rounded-[5rem] -z-10 blur-[100px] opacity-60" />
+              </motion.div>
             </motion.div>
           </div>
         </div>
@@ -138,30 +183,30 @@ export default function LandingPage() {
 
 
       {/* Features Section */}
-      <section id="features" className="py-28 px-6 relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-white via-indigo-50/20 to-white -z-10" />
+      <section id="features" className="py-28 px-6 relative bg-white">
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-50/50 via-white to-slate-50/50 -z-10" />
         <div className="max-w-7xl mx-auto">
           <motion.div {...fadeUp} transition={{ duration: 0.5 }} className="text-center mb-20">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 text-indigo-700 text-xs font-semibold mb-6 border border-indigo-100">
               <Zap className="w-3.5 h-3.5" />Platform Features
             </div>
             <h2 className="text-4xl md:text-5xl font-extrabold mb-5 tracking-tight">
-              Everything you need for{' '}<br className="hidden md:block" />
-              <span className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">vehicle transparency</span>
+              Unmatched data{' '}<br className="hidden md:block" />
+              <span className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">for every vehicle</span>
             </h2>
             <p className="text-slate-500 max-w-2xl mx-auto text-lg leading-relaxed">
-              Our platform combines crowdsourced data with rigorous moderation to deliver the most trustworthy accident histories available.
+              We bridge the gap between crowdsourced insights and professional verification to provide the ultimate source of truth for used vehicles.
             </p>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
-              { icon: ShieldCheck, title: 'Admin-Verified Reports', desc: 'Every single report goes through rigorous admin moderation before publication, ensuring maximum accuracy, reliability, and trust.', color: 'from-indigo-500 to-violet-500', bg: 'bg-indigo-50' },
-              { icon: Search, title: 'Instant VIN Search', desc: 'Search by VIN or license plate and get full accident history with photos, severity ratings, damage descriptions, and repair documentation.', color: 'from-emerald-500 to-teal-500', bg: 'bg-emerald-50' },
-              { icon: DollarSign, title: 'Earn Rewards', desc: 'Contributors earn real cash payouts for every approved accident report. Help build India\'s largest verified vehicle accident database.', color: 'from-amber-500 to-orange-500', bg: 'bg-amber-50' },
-              { icon: Camera, title: 'Photo Evidence', desc: 'Every report includes multiple high-resolution photographs of damage, providing visual proof alongside written accident descriptions.', color: 'from-violet-500 to-purple-500', bg: 'bg-violet-50' },
-              { icon: Lock, title: 'Encrypted & Secure', desc: 'All data is encrypted end-to-end. Your searches are private and confidential. We never share personal information with third parties.', color: 'from-cyan-500 to-blue-500', bg: 'bg-cyan-50' },
-              { icon: Globe, title: 'Pan-India Coverage', desc: 'Growing nationwide with contributors across every state and union territory. The most comprehensive vehicle accident database in India.', color: 'from-rose-500 to-pink-500', bg: 'bg-rose-50' },
+              { icon: ShieldCheck, title: 'Human-Verified Logs', desc: 'No automated guesses. Every incident report is reviewed by expert moderators to ensure descriptions and damage photos are 100% genuine.', color: 'from-indigo-500 to-violet-500', bg: 'bg-indigo-50' },
+              { icon: Search, title: 'VIN & Plate Intelligence', desc: 'Instantly pull detailed reports using just a VIN or license plate. Track accident severity, repair costs, and structural damage history.', color: 'from-emerald-500 to-teal-500', bg: 'bg-emerald-50' },
+              { icon: Award, title: 'Contributor Network', desc: 'Join thousands of contributors helping build transparency. Submit verified accident data and earn real rewards from the platform.', color: 'from-amber-500 to-orange-500', bg: 'bg-amber-50' },
+              { icon: Camera, title: 'Visual Evidence', desc: 'Go beyond text descriptions. Access high-resolution photo proof of vehicle condition and past damages directly from our verified archive.', color: 'from-violet-500 to-purple-500', bg: 'bg-violet-50' },
+              { icon: Lock, title: 'Privacy First Search', desc: 'Search with confidence. We prioritize data security and ensure that vehicle lookups are private, secure, and never shared with third parties.', color: 'from-cyan-500 to-blue-500', bg: 'bg-cyan-50' },
+              { icon: Globe, title: 'National Coverage', desc: 'From major metros to remote districts, our network provides the most comprehensive vehicle history coverage across the entire country.', color: 'from-rose-500 to-pink-500', bg: 'bg-rose-50' },
             ].map((feature, i) => (
               <motion.div key={feature.title} {...fadeUp} transition={{ duration: 0.5, delay: i * 0.08 }}
                 className="group bg-white p-8 rounded-2xl border border-slate-200 hover:border-slate-300 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
@@ -186,16 +231,16 @@ export default function LandingPage() {
               <Sparkles className="w-3.5 h-3.5" />Simple Process
             </div>
             <h2 className="text-4xl md:text-5xl font-extrabold mb-5 tracking-tight">
-              How it <span className="bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">works</span>
+              Search. <span className="bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">Verify.</span> Transact.
             </h2>
-            <p className="text-slate-400 text-lg max-w-xl mx-auto">Three simple steps to verify any vehicle's accident history</p>
+            <p className="text-slate-400 text-lg max-w-xl mx-auto">Buying or selling a vehicle is easier when the history is clear.</p>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
-              { step: '01', title: 'Enter VIN or Plate', desc: 'Input the vehicle identification number or license plate to instantly begin your comprehensive search.', icon: Search },
-              { step: '02', title: 'Review Full History', desc: 'Browse verified reports including photos, severity details, repair info, and damage descriptions from verified contributors.', icon: Eye },
-              { step: '03', title: 'Decide Confidently', desc: 'Make informed buying, selling, or insurance decisions backed by real verified data — no guesswork, just facts.', icon: CheckCircle2 },
+              { step: '01', title: 'Enter Details', desc: 'Input the VIN or Plate number. Our system instantly scans thousands of verified logs to find matching vehicle records.', icon: Search },
+              { step: '02', title: 'Verify History', desc: 'Explore a detailed timeline of incidents, photos, and professional workshop assessments verified by our moderation team.', icon: Eye },
+              { step: '03', title: 'Buy with Confidence', desc: 'Avoid hidden surprises and negotiate the right price with hard data in hand. Move forward with total peace of mind.', icon: CheckCircle2 },
             ].map((item, i) => (
               <motion.div key={item.step} {...fadeUp} transition={{ duration: 0.5, delay: i * 0.15 }}>
                 <div className="bg-white/[0.05] backdrop-blur-sm border border-white/10 rounded-2xl p-8 hover:bg-white/[0.08] transition-all group">
@@ -215,7 +260,8 @@ export default function LandingPage() {
       </section>
 
       {/* Search Feature Showcase */}
-      <section className="py-28 px-6 relative overflow-hidden">
+      <section className="py-28 px-6 relative overflow-hidden bg-slate-50/50">
+        <div className="absolute inset-0 bg-gradient-to-b from-white via-indigo-50/30 to-white -z-20" />
         <div className="absolute -right-40 top-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-gradient-to-br from-violet-100/50 to-indigo-100/30 rounded-full blur-[120px] -z-10" />
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
           <motion.div {...fadeUp} transition={{ duration: 0.6 }}>
@@ -223,10 +269,10 @@ export default function LandingPage() {
               <Search className="w-3.5 h-3.5" />Powerful Search
             </div>
             <h2 className="text-4xl md:text-5xl font-extrabold mb-6 tracking-tight leading-[1.1]">
-              Find any vehicle's{' '}<span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">complete history</span>
+              Vehicle history{' '}<span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">at your fingertips.</span>
             </h2>
             <p className="text-slate-500 text-lg mb-8 leading-relaxed">
-              Our powerful search engine lets you look up any vehicle using its VIN or license plate number. Get instant access to verified accident reports, photos, and damage assessments.
+              Our advanced engine aggregates real-world data specifically for vehicle buyers and insurance professionals who need accurate, untampered historical records.
             </p>
             <div className="space-y-4">
               {[
@@ -269,10 +315,10 @@ export default function LandingPage() {
               <Wrench className="w-3.5 h-3.5" />For Workshops
             </div>
             <h2 className="text-4xl md:text-5xl font-extrabold mb-6 tracking-tight leading-[1.1]">
-              List your <span className="bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">workshop</span> and get discovered
+              Partner with the{' '}<span className="bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">verification network.</span>
             </h2>
             <p className="text-slate-500 text-lg mb-8 leading-relaxed">
-              Auto workshop owners can register their business on our platform. List your shop with details, location, photos, and services — and reach thousands of vehicle owners searching for nearby repair shops.
+              Automotive workshops and repair centers can join our verified network. List your business, verify customer vehicles, and reach a community of quality-conscious drivers.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
               {[
@@ -295,8 +341,8 @@ export default function LandingPage() {
       </section>
 
       {/* User Roles Strip */}
-      <section className="py-28 px-6 relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-white via-violet-50/20 to-white -z-10" />
+      <section className="py-28 px-6 relative bg-slate-50/30">
+        <div className="absolute inset-0 bg-gradient-to-b from-white via-violet-50/10 to-white -z-10" />
         <div className="max-w-7xl mx-auto">
           <motion.div {...fadeUp} transition={{ duration: 0.5 }} className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-extrabold mb-5 tracking-tight">
@@ -332,7 +378,7 @@ export default function LandingPage() {
       </section>
 
       {/* Testimonials */}
-      <section className="py-28 px-6 bg-slate-50 border-y border-slate-100">
+      <section className="py-28 px-6 bg-indigo-50/30 border-y border-slate-100">
         <div className="max-w-7xl mx-auto">
           <motion.div {...fadeUp} transition={{ duration: 0.5 }} className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-extrabold mb-5 tracking-tight">

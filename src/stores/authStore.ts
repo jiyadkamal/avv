@@ -1,11 +1,17 @@
 import { create } from 'zustand';
-import { UserRole } from '@/types';
+import { UserRole, AccountTier, WorkshopStatus } from '@/types';
+import { signOut } from 'firebase/auth';
+import { auth } from '@/lib/firebase/client';
 
 interface User {
     id: string;
     email: string;
     full_name?: string;
     role: UserRole;
+    account_tier: AccountTier;
+    is_workshop: boolean;
+    workshop_status: WorkshopStatus;
+    gst_number?: string;
     avatar_url?: string;
 }
 
@@ -27,7 +33,14 @@ export const useAuthStore = create<AuthState>((set) => ({
     setSession: (session) => set({ session }),
     setLoading: (isLoading) => set({ isLoading }),
     logout: async () => {
-        // This will be handled by the hook
+        try {
+            // Sign out of Firebase
+            await signOut(auth);
+            // Clear server session cookie
+            await fetch('/api/auth/logout', { method: 'POST' });
+        } catch (e) {
+            console.error('Logout error:', e);
+        }
         set({ user: null, session: null });
     },
 }));

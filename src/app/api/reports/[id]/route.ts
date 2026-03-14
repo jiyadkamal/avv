@@ -14,7 +14,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
         const report = { id: doc.id, ...doc.data() };
 
-        // Optionally fetch contributor profile
         const data = doc.data();
         if (data?.contributor_id) {
             const profileDoc = await adminDb.collection('profiles').doc(data.contributor_id).get();
@@ -22,6 +21,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
                 (report as any).contributor = {
                     full_name: profileDoc.data()?.full_name,
                     email: profileDoc.data()?.email,
+                    is_workshop: profileDoc.data()?.is_workshop || false,
                 };
             }
         }
@@ -46,12 +46,27 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
             updates.status = body.status;
             if (body.status === 'approved') {
                 updates.verified_at = new Date().toISOString();
-                // Create earning for contributor
+                
+                // Fetch report to see who submitted it
                 const reportDoc = await adminDb.collection('reports').doc(id).get();
                 if (reportDoc.exists) {
+                    const reportData = reportDoc.data()!;
+                    const contributorId = reportData.contributor_id;
+                    
+                    // Fetch contributor profile to check if they are a workshop
+                    const contributorDoc = await adminDb.collection('profiles').doc(contributorId).get();
+                    let amount = 5.00; // Default incentive
+                    let reason = 'Standard report credit';
+
+                    if (contributorDoc.exists && contributorDoc.data()?.is_workshop === true) {
+                        amount = 10.00; // Workshop incentive
+                        reason = 'Workshop report bonus';
+                    }
+
                     await adminDb.collection('earnings').add({
-                        profile_id: reportDoc.data()?.contributor_id,
-                        amount: 5.00,
+                        profile_id: contributorId,
+                        amount: amount,
+                        reason: reason,
                         status: 'approved',
                         report_id: id,
                         created_at: new Date().toISOString(),

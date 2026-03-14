@@ -3,12 +3,12 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-    LayoutDashboard, FileText, FilePlus, Layers, Trophy, Search,
-    Users, BarChart3, Settings, ShieldCheck, BookmarkCheck, CreditCard,
-    Car, Wrench
+    LayoutDashboard, FilePlus, Layers, Trophy, Search,
+    Users, BarChart3, Settings, ShieldCheck, BookmarkCheck,
+    Car, Wrench, Zap
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { UserRole } from '@/types';
+import { UserRole, AccountTier } from '@/types';
 import { useAuthStore } from '@/stores/authStore';
 
 interface SidebarProps {
@@ -27,20 +27,22 @@ export function Sidebar({ role, className }: SidebarProps) {
             { label: 'Users', icon: Users, href: '/admin/users' },
             { label: 'Analytics', icon: BarChart3, href: '/admin/analytics' },
         ],
-        [UserRole.CONTRIBUTOR]: [
-            { label: 'Dashboard', icon: LayoutDashboard, href: '/contributor/dashboard' },
-            { label: 'New Report', icon: FilePlus, href: '/contributor/upload' },
-            { label: 'My Submissions', icon: Layers, href: '/contributor/reports' },
-            { label: 'Rewards', icon: Trophy, href: '/contributor/wallet' },
-        ],
-        [UserRole.SUBSCRIBER]: [
-            { label: 'Search', icon: Search, href: '/subscriber/search' },
-            { label: 'Saved Reports', icon: BookmarkCheck, href: '/subscriber/saved' },
-            { label: 'Workshops', icon: Wrench, href: '/subscriber/workshops' },
-        ],
-        [UserRole.WORKSHOP]: [
-            { label: 'Dashboard', icon: LayoutDashboard, href: '/workshop/dashboard' },
-            { label: 'My Workshop', icon: Wrench, href: '/workshop/listing' },
+        [UserRole.USER]: [
+            { label: 'Dashboard', icon: LayoutDashboard, href: '/user/dashboard' },
+            { label: 'New Report', icon: FilePlus, href: '/user/upload' },
+            { label: 'My Reports', icon: Layers, href: '/user/reports' },
+            { label: 'Rewards', icon: Trophy, href: '/user/wallet' },
+            // Tier-gated search
+            ...(user?.account_tier !== AccountTier.FREE 
+                ? [{ label: 'Search', icon: Search, href: '/user/search' }]
+                : [{ label: 'Upgrade to Search', icon: Zap, href: '/user/upgrade', highlight: true }]
+            ),
+            { label: 'Saved Reports', icon: BookmarkCheck, href: '/user/saved' },
+            // Workshop specific (or application link)
+            ...(user?.is_workshop 
+                ? []
+                : [{ label: 'Workshop Account', icon: Wrench, href: '/user/workshop-apply' }]
+            ),
         ],
     };
 
@@ -65,16 +67,26 @@ export function Sidebar({ role, className }: SidebarProps) {
                 </Link>
             </div>
 
-            {/* Role badge */}
+            {/* Role/Tier badge */}
             <div className="px-6 mb-4">
-                <div className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-100/60">
-                    <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest">{role}</p>
+                <div className={cn(
+                    "px-3 py-1.5 rounded-lg border",
+                    role === UserRole.ADMIN 
+                        ? "bg-gradient-to-r from-red-50 to-orange-50 border-red-100/60" 
+                        : "bg-gradient-to-r from-indigo-50 to-violet-50 border-indigo-100/60"
+                )}>
+                    <p className={cn(
+                        "text-[10px] font-bold uppercase tracking-widest",
+                        role === UserRole.ADMIN ? "text-red-600" : "text-indigo-600"
+                    )}>
+                        {role === UserRole.ADMIN ? 'Administrator' : `${user?.account_tier || 'Free'} Member`}
+                    </p>
                 </div>
             </div>
 
             {/* Navigation */}
             <nav className="flex-1 px-4 py-2 space-y-1">
-                {items.map((item) => {
+                {items.map((item: any) => {
                     const isActive = pathname === item.href;
                     return (
                         <Link
@@ -84,12 +96,14 @@ export function Sidebar({ role, className }: SidebarProps) {
                                 "flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all relative group",
                                 isActive
                                     ? "bg-gradient-to-r from-indigo-50 to-violet-50 text-indigo-700 font-semibold border border-indigo-100/60"
-                                    : "hover:bg-slate-50 text-slate-600 hover:text-slate-900"
+                                    : item.highlight 
+                                        ? "text-indigo-600 hover:bg-indigo-50" 
+                                        : "hover:bg-slate-50 text-slate-600 hover:text-slate-900"
                             )}
                         >
                             <item.icon className={cn(
                                 "w-[18px] h-[18px] transition-colors",
-                                isActive ? "text-indigo-600" : "text-slate-400 group-hover:text-slate-600"
+                                isActive || item.highlight ? "text-indigo-600" : "text-slate-400 group-hover:text-slate-600"
                             )} />
                             {item.label}
                             {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-full bg-indigo-600" />}
@@ -118,8 +132,12 @@ export function Sidebar({ role, className }: SidebarProps) {
                 {/* User mini card */}
                 <div className="bg-gradient-to-r from-slate-50 to-slate-100/50 rounded-xl px-4 py-3 border border-slate-200/60">
                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center text-white text-xs font-bold shadow-sm">
-                            {initials}
+                        <div className="w-8 h-8 rounded-lg overflow-hidden bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center text-white text-xs font-bold shadow-sm shrink-0">
+                            {user?.avatar_url ? (
+                                <img src={user.avatar_url} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                                initials
+                            )}
                         </div>
                         <div className="min-w-0">
                             <p className="text-xs font-semibold text-slate-900 truncate">{user?.full_name || 'Guest'}</p>

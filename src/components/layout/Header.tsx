@@ -56,8 +56,12 @@ export function Header({ onMenuClick }: HeaderProps) {
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="h-auto p-1 rounded-lg hover:bg-slate-100 flex items-center gap-2 group transition-all">
-                            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center text-xs font-bold text-white shadow-sm shadow-indigo-500/20">
-                                {user?.full_name?.[0] || 'U'}
+                            <div className="w-9 h-9 rounded-xl overflow-hidden bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center text-xs font-bold text-white shadow-sm shadow-indigo-500/20 shrink-0">
+                                {user?.avatar_url ? (
+                                    <img src={user.avatar_url} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                    user?.full_name?.[0] || 'U'
+                                )}
                             </div>
                             <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
                         </Button>
