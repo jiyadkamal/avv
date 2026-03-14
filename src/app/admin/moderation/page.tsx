@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { UserRole, WorkshopStatus } from '@/types';
 import { 
@@ -19,7 +19,7 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { useSearchParams } from 'next/navigation';
 
-export default function ModerationPage() {
+function ModerationContent() {
     const searchParams = useSearchParams();
     const [reports, setReports] = useState<any[]>([]);
     const [workshopRequests, setWorkshopRequests] = useState<any[]>([]);
@@ -337,5 +337,19 @@ export default function ModerationPage() {
                 </Tabs>
             </FadeInView>
         </DashboardLayout>
+    );
+}
+
+export default function ModerationPage() {
+    return (
+        <Suspense fallback={
+            <DashboardLayout role={UserRole.ADMIN}>
+                <div className="flex items-center justify-center min-h-[400px]">
+                    <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+                </div>
+            </DashboardLayout>
+        }>
+            <ModerationContent />
+        </Suspense>
     );
 }
