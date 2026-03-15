@@ -1,0 +1,41 @@
+### Collection: `reports`
+
+| Field Name       |        Data Type | Constraints    |
+| :--------------- | :--------------- | :------------- |
+| `Document ID`    | String           | Primary Key    |
+| `status`         | String           |                |
+| `vehicle_vin`    | String           |                |
+| `vehicle_plate`  | String           |                |
+| `created_at`     | Timestamp        |                |
+| `contributor_id` | String           | Foreign Key    |
+
+---
+
+### Collection: `workshops`
+
+| Field Name     |  Data Type       | Constraints    |
+| :------------- | :--------------- | :------------- |
+| `Document ID`  | String           | Primary Key    |
+| `state`        | String           |                |
+| `created_at`   | Timestamp        |                |
+| `owner_id`     | String           | Foreign Key    |
+
+---
+
+### Collection: `earnings`
+
+| Field Name     |        Data Type | Constraints    |
+| :------------- | :--------------- | :------------- |
+| `Document ID`  | String           | Primary Key    |
+| `profile_id`   | String           | Foreign Key    |
+| `created_at`   | Timestamp        |                |
+
+---
+
+### Collection: `saved_reports`
+
+| Field Name     |        Data Type | Constraints    |
+| :------------- | :--------------- | :------------- |
+| `Document ID`  | String           | Primary Key    |
+| `user_id`      | String           | Foreign Key    |
+| `created_at`   | Timestamp        |                |

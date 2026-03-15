@@ -107,7 +107,7 @@ export default function LandingPage() {
               </p>
 
               {/* Search Bar CTA */}
-              <Link href="/subscriber/search" className="group flex items-center gap-4 bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl px-6 py-5 hover:bg-white/10 hover:border-indigo-500/50 hover:shadow-2xl hover:shadow-indigo-500/10 transition-all max-w-md">
+              <Link href="/user/search" className="group flex items-center gap-4 bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl px-6 py-5 hover:bg-white/10 hover:border-indigo-500/50 hover:shadow-2xl hover:shadow-indigo-500/10 transition-all max-w-md">
                 <Search className="w-6 h-6 text-slate-500 shrink-0 group-hover:text-indigo-400 transition-colors" />
                 <span className="text-slate-500 text-base font-medium flex-1 text-left">Enter VIN or plate number...</span>
                 <span className="px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-black uppercase tracking-widest group-hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-600/20 whitespace-nowrap">
@@ -289,7 +289,7 @@ export default function LandingPage() {
                 </div>
               ))}
             </div>
-            <Link href="/subscriber/search" className="inline-flex items-center gap-2 mt-8 px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm transition-all shadow-lg shadow-emerald-600/20">
+            <Link href="/user/search" className="inline-flex items-center gap-2 mt-8 px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm transition-all shadow-lg shadow-emerald-600/20">
               Try Vehicle Search <ArrowRight className="w-4 h-4" />
             </Link>
           </motion.div>
@@ -352,7 +352,7 @@ export default function LandingPage() {
           </motion.div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
-              { role: 'Subscriber', icon: Search, desc: 'Search vehicles by VIN or plate, access verified accident histories, save reports for later, and find nearby workshops.', color: 'from-indigo-500 to-violet-500', bg: 'from-indigo-50 to-violet-50', features: ['Unlimited searches', 'Save & bookmark reports', 'Find workshops'] },
+              { role: 'Member', icon: Search, desc: 'Search vehicles by VIN or plate, access verified accident histories, save reports for later, and find nearby workshops.', color: 'from-indigo-500 to-violet-500', bg: 'from-indigo-50 to-violet-50', features: ['Unlimited searches', 'Save & bookmark reports', 'Find workshops'] },
               { role: 'Contributor', icon: Award, desc: 'Submit accident reports with photos and earn real rewards for every verified submission that passes admin moderation.', color: 'from-emerald-500 to-teal-500', bg: 'from-emerald-50 to-teal-50', features: ['Earn real payouts', 'Track your reports', 'Build your reputation'] },
               { role: 'Workshop Owner', icon: Wrench, desc: 'Register your workshop with location, services, and photos. Get discovered by vehicle owners searching for repair services.', color: 'from-amber-500 to-orange-500', bg: 'from-amber-50 to-orange-50', features: ['List your business', 'Upload shop photos', 'Reach new customers'] },
             ].map((item, i) => (
@@ -423,7 +423,7 @@ export default function LandingPage() {
                   Join thousands of smart buyers who check vehicle histories before making a purchase. Start your search for free.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <Link href="/subscriber/search" className="px-10 py-4 rounded-2xl bg-white text-indigo-700 font-bold text-base hover:bg-indigo-50 transition-all shadow-xl hover:-translate-y-0.5">
+                  <Link href="/user/search" className="px-10 py-4 rounded-2xl bg-white text-indigo-700 font-bold text-base hover:bg-indigo-50 transition-all shadow-xl hover:-translate-y-0.5">
                     Search Vehicles
                   </Link>
                   <Link href="/register" className="px-10 py-4 rounded-2xl bg-white/10 backdrop-blur-sm text-white font-bold text-base hover:bg-white/20 transition-all border border-white/20">
@@ -459,7 +459,7 @@ export default function LandingPage() {
             <div>
               <h4 className="text-sm font-semibold mb-4 text-slate-900">Product</h4>
               <ul className="space-y-3 text-slate-500 text-sm">
-                <li><Link href="/subscriber/search" className="hover:text-indigo-600 transition-colors">Search Vehicles</Link></li>
+                <li><Link href="/user/search" className="hover:text-indigo-600 transition-colors">Search Vehicles</Link></li>
                 <li><Link href="/register" className="hover:text-indigo-600 transition-colors">For Contributors</Link></li>
                 <li><Link href="/register" className="hover:text-indigo-600 transition-colors">For Workshops</Link></li>
                 <li><Link href="/login" className="hover:text-indigo-600 transition-colors">Sign In</Link></li>

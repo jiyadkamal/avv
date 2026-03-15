@@ -33,11 +33,15 @@ export default function SavedReportsPage() {
         fetchSaved();
     }, []);
 
-    const handleRemove = async (id: string) => {
+    const handleRemove = async (reportId: string) => {
         try { 
-            const res = await fetch(`/api/saved-reports?report_id=${id}`, { method: 'DELETE' }); 
+            const res = await fetch('/api/saved-reports', { 
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ report_id: reportId })
+            }); 
             if (res.ok) { 
-                setSaved(prev => prev.filter(r => r.id !== id)); 
+                setSaved(prev => prev.filter(r => r.report_id !== reportId)); 
                 toast.success('Removed from saved'); 
             } 
         }
@@ -73,10 +77,10 @@ export default function SavedReportsPage() {
                                                 </div>
                                                 <div className="min-w-0">
                                                     <h3 className="text-lg font-bold text-slate-900 truncate mb-1">
-                                                        {r.vehicle_make} {r.vehicle_model}
+                                                        {r.report.vehicle_make} {r.report.vehicle_model}
                                                     </h3>
                                                     <p className="text-xs font-bold text-slate-400 uppercase tracking-widest leading-none">
-                                                        <span className="opacity-50 mr-1">VIN</span> ...{r.vehicle_vin?.slice(-8) || 'N/A'}
+                                                        <span className="opacity-50 mr-1">VIN</span> ...{r.report.vehicle_vin?.slice(-8) || 'N/A'}
                                                     </p>
                                                 </div>
                                             </div>
@@ -90,7 +94,7 @@ export default function SavedReportsPage() {
                                                     variant="ghost" 
                                                     size="icon" 
                                                     className="h-10 w-10 rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50" 
-                                                    onClick={() => handleRemove(r.id)}
+                                                    onClick={() => handleRemove(r.report_id)}
                                                 >
                                                     <Trash2 className="w-5 h-5" />
                                                 </Button>

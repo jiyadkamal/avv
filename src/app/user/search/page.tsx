@@ -5,7 +5,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { UserRole, AccountTier } from '@/types';
 import { 
     Search, Loader2, FileText, Car, ChevronRight, 
-    AlertTriangle, ShieldCheck, Zap, Lock, MapPin, Wrench 
+    AlertTriangle, ShieldCheck, Zap, Lock, MapPin, Wrench, Bookmark 
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,7 @@ import { FadeInView } from '@/lib/animations';
 import { useAuthStore } from '@/stores/authStore';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 export default function SearchPage() {
     const { user } = useAuthStore();
@@ -22,8 +23,36 @@ export default function SearchPage() {
     const [results, setResults] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [hasSearched, setHasSearched] = useState(false);
+    const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
+    const [savingId, setSavingId] = useState<string | null>(null);
 
     const isLocked = user?.account_tier === AccountTier.FREE;
+
+    const handleSaveReport = async (e: React.MouseEvent, reportId: string) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (savedIds.has(reportId)) return;
+        setSavingId(reportId);
+        try {
+            const res = await fetch('/api/saved-reports', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ report_id: reportId }),
+            });
+            if (res.ok) {
+                setSavedIds(prev => new Set(prev).add(reportId));
+                toast.success('Report saved!');
+            } else if (res.status === 409) {
+                setSavedIds(prev => new Set(prev).add(reportId));
+                toast.info('Already saved');
+            } else {
+                toast.error('Failed to save');
+            }
+        } catch {
+            toast.error('Failed to save report');
+        }
+        setSavingId(null);
+    };
 
     const handleSearch = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -204,6 +233,24 @@ export default function SearchPage() {
                                                             <Button variant="ghost" className="text-indigo-600 font-extrabold text-xs uppercase p-0 h-auto hover:bg-transparent">
                                                                 View Full History
                                                             </Button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => handleSaveReport(e, report.id)}
+                                                                disabled={savingId === report.id}
+                                                                className={cn(
+                                                                    'p-2.5 rounded-xl transition-all',
+                                                                    savedIds.has(report.id)
+                                                                        ? 'bg-indigo-50 text-indigo-600'
+                                                                        : 'text-slate-400 hover:text-indigo-600 hover:bg-indigo-50'
+                                                                )}
+                                                                title={savedIds.has(report.id) ? 'Saved' : 'Save report'}
+                                                            >
+                                                                {savingId === report.id ? (
+                                                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                                                ) : (
+                                                                    <Bookmark className={cn("w-5 h-5", savedIds.has(report.id) && "fill-current")} />
+                                                                )}
+                                                            </button>
                                                         </div>
                                                     </div>
                                                 </div>

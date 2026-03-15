@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { UserRole } from '@/types';
+import type { User } from '@/types';
 import { 
     Upload, Car, AlertTriangle, Loader2, X, MapPin, 
     Plus, Camera, Wrench, FileText, Info, Navigation 
@@ -29,6 +30,7 @@ export default function UploadReportPage() {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const invoiceInputRef = useRef<HTMLInputElement>(null);
 
+    const [reportType, setReportType] = useState<'normal' | 'workshop'>(user?.is_workshop ? 'workshop' : 'normal');
     const [form, setForm] = useState({ 
         vehicle_vin: '', 
         vehicle_plate: '', 
@@ -40,6 +42,15 @@ export default function UploadReportPage() {
         service_details: '',
         replaced_parts: ''
     });
+
+    const handleReportTypeChange = (type: 'normal' | 'workshop') => {
+        setReportType(type);
+        if (type === 'normal') {
+            setForm(prev => ({ ...prev, service_details: '', replaced_parts: '' }));
+            setInvoiceFile(null);
+            setInvoicePreview(null);
+        }
+    };
 
     const [images, setImages] = useState<File[]>([]);
     const [previews, setPreviews] = useState<string[]>([]);
@@ -130,6 +141,7 @@ export default function UploadReportPage() {
             Object.entries(form).forEach(([key, value]) => {
                 if (value) formData.append(key, value);
             });
+            if (user.is_workshop) formData.append('report_type', reportType);
             
             formData.append('latitude', location.lat.toString()); 
             formData.append('longitude', location.lng.toString());
@@ -166,13 +178,49 @@ export default function UploadReportPage() {
                         <h1 className="text-3xl font-bold text-slate-900 mb-1">Submit Accident Report</h1>
                         <p className="text-slate-500 text-sm">Contribute verified data and earn rewards.</p>
                     </div>
-                    {user.is_workshop && (
+                    {user.is_workshop && reportType === 'workshop' && (
                         <div className="bg-emerald-50 text-emerald-700 px-4 py-2 rounded-xl border border-emerald-100 flex items-center gap-2">
                             <Wrench className="w-4 h-4" />
                             <span className="text-sm font-bold">Workshop Bonus Active ($10)</span>
                         </div>
                     )}
                 </div>
+
+                {/* Report Type Selector — Workshop Users Only */}
+                {user.is_workshop && (
+                    <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-2 flex gap-2">
+                        <button
+                            type="button"
+                            onClick={() => handleReportTypeChange('normal')}
+                            className={cn(
+                                'flex-1 flex items-center justify-center gap-2.5 py-3.5 rounded-2xl text-sm font-bold transition-all duration-200',
+                                reportType === 'normal'
+                                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200'
+                                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                            )}
+                        >
+                            <AlertTriangle className="w-4 h-4" />
+                            Normal Report
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => handleReportTypeChange('workshop')}
+                            className={cn(
+                                'flex-1 flex items-center justify-center gap-2.5 py-3.5 rounded-2xl text-sm font-bold transition-all duration-200',
+                                reportType === 'workshop'
+                                    ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-200'
+                                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                            )}
+                        >
+                            <Wrench className="w-4 h-4" />
+                            Workshop Report
+                            <span className={cn(
+                                'text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md',
+                                reportType === 'workshop' ? 'bg-white/20 text-white' : 'bg-emerald-50 text-emerald-600'
+                            )}>+$10</span>
+                        </button>
+                    </div>
+                )}
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     {/* Vehicle Info */}
@@ -242,7 +290,7 @@ export default function UploadReportPage() {
 
                     {/* Workshop Specifics (Conditional) */}
                     <AnimatePresence>
-                        {user.is_workshop && (
+                        {user.is_workshop && reportType === 'workshop' && (
                             <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
                                 <Card className="border-none shadow-sm rounded-3xl border-2 border-emerald-100 bg-emerald-50/20 overflow-hidden mb-6">
                                     <CardHeader className="bg-emerald-50 px-8 py-6">
@@ -254,7 +302,7 @@ export default function UploadReportPage() {
                                     <CardContent className="p-8 space-y-6">
                                         <div className="space-y-2">
                                             <Label className="text-sm font-bold text-emerald-900">Services Performed *</Label>
-                                            <Textarea required={user.is_workshop} value={form.service_details} onChange={e => setForm(prev => ({ ...prev, service_details: e.target.value }))} placeholder="List all repairs and checks performed on the vehicle..." className="min-h-[100px] rounded-xl bg-white border-none focus-visible:ring-emerald-500" />
+                                            <Textarea required={reportType === 'workshop'} value={form.service_details} onChange={e => setForm(prev => ({ ...prev, service_details: e.target.value }))} placeholder="List all repairs and checks performed on the vehicle..." className="min-h-[100px] rounded-xl bg-white border-none focus-visible:ring-emerald-500" />
                                         </div>
                                         <div className="space-y-2">
                                             <Label className="text-sm font-bold text-emerald-900">Parts Replaced (Optional)</Label>

@@ -52,6 +52,7 @@ export async function POST(request: NextRequest) {
         const address = formData.get('address') as string || '';
         
         // Workshop specific fields
+        const report_type = formData.get('report_type') as string;
         const service_details = formData.get('service_details') as string;
         const replaced_parts = formData.get('replaced_parts') as string;
         const invoice_file = formData.get('invoice') as File;
@@ -95,7 +96,7 @@ export async function POST(request: NextRequest) {
         if (service_details) reportData.service_details = service_details;
         if (replaced_parts) reportData.replaced_parts = replaced_parts;
         if (invoice_url) reportData.invoice_url = invoice_url;
-        if (user.is_workshop) reportData.is_workshop_report = true;
+        if (report_type === 'workshop') reportData.is_workshop_report = true;
 
         const docRef = await adminDb.collection('reports').add(reportData);
 
